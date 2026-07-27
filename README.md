@@ -40,6 +40,21 @@ machine running the backend (e.g. `http://192.168.1.20:3000`) when testing on a 
 `.env` is read at **bundle time** by `react-native-dotenv`, so restart Metro with
 `pnpm start --reset-cache` after changing it. `.env` is gitignored; `.env.example` documents the keys.
 
+## Data layer
+
+`my-cachifa-backend` isn't deployed yet, so the app talks to a repository interface
+(`src/api/repositories/interfaces`) with two implementations:
+
+- `src/api/repositories/mock` — in-memory seed data with simulated latency. Default.
+- `src/api/repositories/http` — axios calls against `env.apiBaseUrl`. Untested against a real
+  backend; exists so switching later is a one-line config change, not a rewrite.
+
+`API_MODE` in `.env` picks between them (`mock` by default, `http` to call the real API). Screens
+never import a repository directly — they consume it through a hook in `src/hooks`, backed by
+React Query. `src/api/repositoryFactory.ts` is the only file that decides which implementation is
+live; an ESLint rule blocks `src/screens` and `src/components` from importing repositories
+directly.
+
 ## Project structure
 
 ```
