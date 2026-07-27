@@ -1,43 +1,44 @@
 /**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
  * @format
  */
 
-import { NewAppScreen } from '@react-native/new-app-screen'
-import { StatusBar, StyleSheet, useColorScheme, View } from 'react-native'
-import {
-  SafeAreaProvider,
-  useSafeAreaInsets,
-} from 'react-native-safe-area-context'
+import React from 'react'
+import { StatusBar, StyleSheet } from 'react-native'
+import { GestureHandlerRootView } from 'react-native-gesture-handler'
+import { NavigationContainer } from '@react-navigation/native'
+import { SafeAreaProvider } from 'react-native-safe-area-context'
+import { ThemeProvider, useTheme } from '@/theme'
+import { RootNavigator, buildNavigationTheme } from '@/navigation'
 
-function App() {
-  const isDarkMode = useColorScheme() === 'dark'
+function AppContent() {
+  const { scheme, colors } = useTheme()
 
   return (
-    <SafeAreaProvider>
-      <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-      <AppContent />
-    </SafeAreaProvider>
+    <>
+      <StatusBar
+        barStyle={scheme === 'dark' ? 'light-content' : 'dark-content'}
+      />
+      <NavigationContainer theme={buildNavigationTheme(scheme, colors)}>
+        <RootNavigator />
+      </NavigationContainer>
+    </>
   )
 }
 
-function AppContent() {
-  const safeAreaInsets = useSafeAreaInsets()
-
+function App() {
   return (
-    <View style={styles.container}>
-      <NewAppScreen
-        templateFileName="App.tsx"
-        safeAreaInsets={safeAreaInsets}
-      />
-    </View>
+    <GestureHandlerRootView style={styles.flex}>
+      <SafeAreaProvider>
+        <ThemeProvider>
+          <AppContent />
+        </ThemeProvider>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   )
 }
 
 const styles = StyleSheet.create({
-  container: {
+  flex: {
     flex: 1,
   },
 })

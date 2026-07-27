@@ -20,5 +20,7 @@ module.exports = {
         allowUndefined: true,
       },
     ],
+    // Must stay last: the Worklets plugin rewrites Reanimated's worklet functions.
+    'react-native-worklets/plugin',
   ],
 }
