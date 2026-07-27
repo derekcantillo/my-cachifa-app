@@ -1,0 +1,8 @@
+node_modules/
+vendor/
+coverage/
+android/
+ios/
+*.lock
+pnpm-lock.yaml
+Gemfile.lock
