@@ -1,4 +1,5 @@
 import type { ListBudgetsParams } from '@/api/repositories/interfaces/BudgetRepository'
+import type { ListCategoriesParams } from '@/api/repositories/interfaces/CategoryRepository'
 import type { ListTransactionsParams } from '@/api/repositories/interfaces/TransactionRepository'
 
 export const queryKeys = {
@@ -6,6 +7,8 @@ export const queryKeys = {
   transactions: (params?: ListTransactionsParams) =>
     ['transactions', params ?? {}] as const,
   budgets: (params?: ListBudgetsParams) => ['budgets', params ?? {}] as const,
+  categories: (params?: ListCategoriesParams) =>
+    ['categories', params ?? {}] as const,
   goals: () => ['goals'] as const,
   reportsRoot: ['reports'] as const,
   report: (month: string) => ['reports', month] as const,

@@ -4,27 +4,30 @@ export type DashboardStackParamList = {
   Dashboard: undefined
 }
 
-export type TransactionsStackParamList = {
-  Transactions: undefined
+export type ExpensesStackParamList = {
+  Expenses: undefined
 }
 
 export type GoalsStackParamList = {
   Goals: undefined
 }
 
-export type SettingsStackParamList = {
-  Settings: undefined
+export type ReportsStackParamList = {
+  Reports: undefined
 }
 
 export type MainTabParamList = {
   DashboardTab: NavigatorScreenParams<DashboardStackParamList>
-  TransactionsTab: NavigatorScreenParams<TransactionsStackParamList>
+  ExpensesTab: NavigatorScreenParams<ExpensesStackParamList>
   GoalsTab: NavigatorScreenParams<GoalsStackParamList>
-  SettingsTab: NavigatorScreenParams<SettingsStackParamList>
+  ReportsTab: NavigatorScreenParams<ReportsStackParamList>
 }
 
+// Settings sits outside the tab bar: the design reaches it from the avatar in
+// the app header, so it lives at the root instead.
 export type RootStackParamList = {
   Main: NavigatorScreenParams<MainTabParamList>
+  Settings: undefined
 }
 
 // Lets useNavigation()/useRoute() infer types app-wide without repeating generics.

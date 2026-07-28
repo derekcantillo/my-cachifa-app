@@ -1,4 +1,5 @@
 export { httpTransactionRepository } from './HttpTransactionRepository'
 export { httpBudgetRepository } from './HttpBudgetRepository'
+export { httpCategoryRepository } from './HttpCategoryRepository'
 export { httpGoalRepository } from './HttpGoalRepository'
 export { httpReportRepository } from './HttpReportRepository'

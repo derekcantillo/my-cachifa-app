@@ -6,3 +6,9 @@ export { spacing } from './spacing'
 export type { Spacing } from './spacing'
 export { typography, fontSizes, fontWeights, lineHeights } from './typography'
 export type { Typography } from './typography'
+export {
+  getBudgetStatus,
+  getBudgetStatusColor,
+  toPercent,
+} from './budgetStatus'
+export type { BudgetStatus } from './budgetStatus'

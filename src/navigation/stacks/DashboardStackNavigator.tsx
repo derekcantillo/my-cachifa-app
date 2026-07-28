@@ -6,12 +6,13 @@ import type { DashboardStackParamList } from '../types'
 const Stack = createNativeStackNavigator<DashboardStackParamList>()
 
 export function DashboardStackNavigator() {
+  // Screens draw their own AppHeader, so the native header stays off.
   return (
-    <Stack.Navigator>
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen
         name="Dashboard"
         component={DashboardScreen}
-        options={{ title: 'Dashboard' }}
+        options={{ title: 'Inicio' }}
       />
     </Stack.Navigator>
   )

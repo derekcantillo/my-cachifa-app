@@ -1,18 +1,21 @@
 import { API_MODE } from '@env'
 import {
   mockBudgetRepository,
+  mockCategoryRepository,
   mockGoalRepository,
   mockReportRepository,
   mockTransactionRepository,
 } from './repositories/mock'
 import {
   httpBudgetRepository,
+  httpCategoryRepository,
   httpGoalRepository,
   httpReportRepository,
   httpTransactionRepository,
 } from './repositories/http'
 import type {
   BudgetRepository,
+  CategoryRepository,
   GoalRepository,
   ReportRepository,
   TransactionRepository,
@@ -31,6 +34,9 @@ export const transactionRepository: TransactionRepository =
 
 export const budgetRepository: BudgetRepository =
   apiMode === 'http' ? httpBudgetRepository : mockBudgetRepository
+
+export const categoryRepository: CategoryRepository =
+  apiMode === 'http' ? httpCategoryRepository : mockCategoryRepository
 
 export const goalRepository: GoalRepository =
   apiMode === 'http' ? httpGoalRepository : mockGoalRepository

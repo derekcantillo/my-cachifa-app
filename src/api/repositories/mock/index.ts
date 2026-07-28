@@ -1,4 +1,5 @@
 export { mockTransactionRepository } from './MockTransactionRepository'
 export { mockBudgetRepository } from './MockBudgetRepository'
+export { mockCategoryRepository } from './MockCategoryRepository'
 export { mockGoalRepository } from './MockGoalRepository'
 export { mockReportRepository } from './MockReportRepository'

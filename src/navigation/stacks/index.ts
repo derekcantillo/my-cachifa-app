@@ -1,4 +1,4 @@
 export { DashboardStackNavigator } from './DashboardStackNavigator'
-export { TransactionsStackNavigator } from './TransactionsStackNavigator'
+export { ExpensesStackNavigator } from './ExpensesStackNavigator'
 export { GoalsStackNavigator } from './GoalsStackNavigator'
-export { SettingsStackNavigator } from './SettingsStackNavigator'
+export { ReportsStackNavigator } from './ReportsStackNavigator'

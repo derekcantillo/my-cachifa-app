@@ -1,4 +1,5 @@
 export { DashboardScreen } from './dashboard/DashboardScreen'
-export { TransactionsScreen } from './transactions/TransactionsScreen'
+export { ExpensesScreen } from './expenses/ExpensesScreen'
 export { GoalsScreen } from './goals/GoalsScreen'
+export { ReportsScreen } from './reports/ReportsScreen'
 export { SettingsScreen } from './settings/SettingsScreen'
