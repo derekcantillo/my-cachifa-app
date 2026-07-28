@@ -8,6 +8,7 @@ import {
 } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import type { Transaction } from '@/api/types'
 import {
   AppHeader,
   Card,
@@ -63,8 +64,22 @@ export function ExpensesScreen() {
     setFiltersOpen(open => !open)
   }, [])
 
-  // The create-movement modal arrives in a later sub-block.
-  const handleCreatePress = useCallback(() => {}, [])
+  const handleCreatePress = useCallback(() => {
+    navigation.navigate('RegisterTransaction')
+  }, [navigation])
+
+  const openTransaction = useCallback(
+    (transaction: Transaction) => {
+      navigation.navigate('TransactionDetail', {
+        transactionId: transaction.id,
+      })
+    },
+    [navigation],
+  )
+
+  const openBudgetManagement = useCallback(() => {
+    navigation.navigate('BudgetManagement', { month })
+  }, [month, navigation])
 
   const openSettings = useCallback(() => {
     navigation.navigate('Settings')
@@ -104,7 +119,11 @@ export function ExpensesScreen() {
           maxMonth={getCurrentMonthKey()}
         />
 
-        <BudgetsSection rows={budgetRows} isLoading={isBudgetsLoading} />
+        <BudgetsSection
+          rows={budgetRows}
+          isLoading={isBudgetsLoading}
+          onManagePress={openBudgetManagement}
+        />
 
         <View style={{ gap: spacing.sm }}>
           <SectionHeader
@@ -169,6 +188,7 @@ export function ExpensesScreen() {
                   <TransactionListItem
                     transaction={transaction}
                     category={categoriesById[transaction.categoryId]}
+                    onPress={openTransaction}
                   />
                 </View>
               ))

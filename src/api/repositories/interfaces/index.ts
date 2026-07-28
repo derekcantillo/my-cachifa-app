@@ -9,3 +9,4 @@ export type {
 } from './CategoryRepository'
 export type { GoalRepository } from './GoalRepository'
 export type { ReportRepository } from './ReportRepository'
+export type { AccountRepository } from './AccountRepository'

@@ -1,5 +1,6 @@
 import { API_MODE } from '@env'
 import {
+  mockAccountRepository,
   mockBudgetRepository,
   mockCategoryRepository,
   mockGoalRepository,
@@ -7,6 +8,7 @@ import {
   mockTransactionRepository,
 } from './repositories/mock'
 import {
+  httpAccountRepository,
   httpBudgetRepository,
   httpCategoryRepository,
   httpGoalRepository,
@@ -14,6 +16,7 @@ import {
   httpTransactionRepository,
 } from './repositories/http'
 import type {
+  AccountRepository,
   BudgetRepository,
   CategoryRepository,
   GoalRepository,
@@ -43,3 +46,6 @@ export const goalRepository: GoalRepository =
 
 export const reportRepository: ReportRepository =
   apiMode === 'http' ? httpReportRepository : mockReportRepository
+
+export const accountRepository: AccountRepository =
+  apiMode === 'http' ? httpAccountRepository : mockAccountRepository

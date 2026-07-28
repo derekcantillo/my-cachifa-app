@@ -9,7 +9,7 @@ import type {
   UpdateGoalInput,
 } from '../../types/goal'
 import type { GoalRepository } from '../interfaces/GoalRepository'
-import { simulateLatency } from './latency'
+import { simulateLatency, simulateWrite } from './latency'
 import { seedGoals } from './seed-data'
 
 const PROJECTION_MONTHS = 12
@@ -75,15 +75,32 @@ class MockGoalRepository implements GoalRepository {
   }
 
   async create(input: CreateGoalInput): Promise<Goal> {
-    await simulateLatency()
+    await simulateWrite()
+
+    const createdAt = new Date().toISOString()
+    const seedAmount = input.currentAmount ?? 0
 
     const created: Goal = {
       status: 'active',
       currentAmount: 0,
       contributions: [],
       ...input,
+      // What is already saved starts the history, so the detail screen has
+      // something to show from the very first day.
+      ...(seedAmount > 0
+        ? {
+            contributions: [
+              {
+                id: generateId('contrib'),
+                amount: seedAmount,
+                date: createdAt,
+                note: 'Ahorro inicial',
+              },
+            ],
+          }
+        : {}),
       id: generateId('goal'),
-      createdAt: new Date().toISOString(),
+      createdAt,
     }
 
     goals = [created, ...goals]
@@ -91,7 +108,7 @@ class MockGoalRepository implements GoalRepository {
   }
 
   async update(id: string, input: UpdateGoalInput): Promise<Goal> {
-    await simulateLatency()
+    await simulateWrite()
 
     const existing = goals.find(goal => goal.id === id)
     if (!existing) {
@@ -104,12 +121,12 @@ class MockGoalRepository implements GoalRepository {
   }
 
   async remove(id: string): Promise<void> {
-    await simulateLatency()
+    await simulateWrite()
     goals = goals.filter(goal => goal.id !== id)
   }
 
   async addContribution(input: AddGoalContributionInput): Promise<Goal> {
-    await simulateLatency()
+    await simulateWrite()
 
     const existing = goals.find(goal => goal.id === input.goalId)
     if (!existing) {

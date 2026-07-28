@@ -9,6 +9,18 @@ export function useGoals() {
   })
 }
 
+/**
+ * A single goal, for the detail screen. Resolves to `null` when it is gone.
+ * Pass `enabled: false` on the create path, where there is nothing to load yet.
+ */
+export function useGoal(id: string, options: { enabled?: boolean } = {}) {
+  return useQuery({
+    queryKey: queryKeys.goal(id),
+    queryFn: () => goalRepository.getById(id),
+    enabled: options.enabled ?? true,
+  })
+}
+
 /** @param months How many periods to project, the current one included. */
 export function useSavingsProjection(months?: number) {
   return useQuery({

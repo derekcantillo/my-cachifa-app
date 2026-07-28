@@ -13,12 +13,14 @@ interface RecentTransactionsCardProps {
   transactions: Transaction[]
   categoriesById: Record<string, Category>
   onSeeAllPress?: () => void
+  onTransactionPress?: (transaction: Transaction) => void
 }
 
 export function RecentTransactionsCard({
   transactions,
   categoriesById,
   onSeeAllPress,
+  onTransactionPress,
 }: RecentTransactionsCardProps) {
   const { colors, spacing, typography } = useTheme()
 
@@ -48,6 +50,7 @@ export function RecentTransactionsCard({
                 transaction={transaction}
                 category={categoriesById[transaction.categoryId]}
                 subtitle="time"
+                onPress={onTransactionPress}
               />
             </View>
           ))

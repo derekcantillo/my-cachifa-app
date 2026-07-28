@@ -5,4 +5,5 @@
 declare module '@env' {
   export const API_BASE_URL: string | undefined
   export const API_MODE: string | undefined
+  export const MOCK_FAILURE_RATE: string | undefined
 }

@@ -8,7 +8,7 @@ import type {
   ListTransactionsParams,
   TransactionRepository,
 } from '../interfaces/TransactionRepository'
-import { simulateLatency } from './latency'
+import { simulateLatency, simulateWrite } from './latency'
 import { seedTransactions } from './seed-data'
 
 let transactions: Transaction[] = seedTransactions.map(transaction => ({
@@ -43,7 +43,7 @@ class MockTransactionRepository implements TransactionRepository {
   }
 
   async create(input: CreateTransactionInput): Promise<Transaction> {
-    await simulateLatency()
+    await simulateWrite()
 
     const now = new Date().toISOString()
     const created: Transaction = {
@@ -62,7 +62,7 @@ class MockTransactionRepository implements TransactionRepository {
     id: string,
     input: UpdateTransactionInput,
   ): Promise<Transaction> {
-    await simulateLatency()
+    await simulateWrite()
 
     const existing = transactions.find(transaction => transaction.id === id)
     if (!existing) {
@@ -82,7 +82,7 @@ class MockTransactionRepository implements TransactionRepository {
   }
 
   async remove(id: string): Promise<void> {
-    await simulateLatency()
+    await simulateWrite()
     transactions = transactions.filter(transaction => transaction.id !== id)
   }
 }

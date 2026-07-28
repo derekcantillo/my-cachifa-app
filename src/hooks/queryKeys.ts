@@ -6,11 +6,16 @@ export const queryKeys = {
   transactionsRoot: ['transactions'] as const,
   transactions: (params?: ListTransactionsParams) =>
     ['transactions', params ?? {}] as const,
+  // Nested under the transactions root so any write refreshes the detail too.
+  transaction: (id: string) => ['transactions', 'detail', id] as const,
+  budgetsRoot: ['budgets'] as const,
   budgets: (params?: ListBudgetsParams) => ['budgets', params ?? {}] as const,
   categories: (params?: ListCategoriesParams) =>
     ['categories', params ?? {}] as const,
+  accounts: () => ['accounts'] as const,
   // Nested under the goals root so invalidating goals refreshes the projection.
   goals: () => ['goals'] as const,
+  goal: (id: string) => ['goals', 'detail', id] as const,
   savingsProjection: (months?: number) =>
     ['goals', 'savings-projection', months ?? null] as const,
   reportsRoot: ['reports'] as const,

@@ -8,6 +8,7 @@ import {
 } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import type { Goal, Transaction } from '@/api/types'
 import { AppHeader, FAB } from '@/components'
 import { useTheme } from '@/theme'
 import { daysLeftInMonth } from '@/utils'
@@ -38,8 +39,18 @@ export function DashboardScreen() {
     refetch,
   } = useDashboardData()
 
-  // The create-movement modal arrives in a later sub-block.
-  const handleCreatePress = useCallback(() => {}, [])
+  const handleCreatePress = useCallback(() => {
+    navigation.navigate('RegisterTransaction')
+  }, [navigation])
+
+  const openTransaction = useCallback(
+    (transaction: Transaction) => {
+      navigation.navigate('TransactionDetail', {
+        transactionId: transaction.id,
+      })
+    },
+    [navigation],
+  )
 
   const openSettings = useCallback(() => {
     navigation.navigate('Settings')
@@ -51,6 +62,13 @@ export function DashboardScreen() {
       params: { screen: 'Goals' },
     })
   }, [navigation])
+
+  const openGoal = useCallback(
+    (goal: Goal) => {
+      navigation.navigate('GoalDetail', { goalId: goal.id })
+    },
+    [navigation],
+  )
 
   const openExpenses = useCallback(() => {
     navigation.navigate('Main', {
@@ -112,6 +130,7 @@ export function DashboardScreen() {
                 goals={activeGoals}
                 edgeInset={spacing.md}
                 onSeeAllPress={openGoals}
+                onGoalPress={openGoal}
               />
             </View>
 
@@ -119,6 +138,7 @@ export function DashboardScreen() {
               transactions={recentTransactions}
               categoriesById={categoriesById}
               onSeeAllPress={openExpenses}
+              onTransactionPress={openTransaction}
             />
           </>
         )}

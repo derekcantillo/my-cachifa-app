@@ -8,7 +8,7 @@ import type {
   BudgetRepository,
   ListBudgetsParams,
 } from '../interfaces/BudgetRepository'
-import { simulateLatency } from './latency'
+import { simulateLatency, simulateWrite } from './latency'
 import { seedBudgets } from './seed-data'
 
 let budgets: Budget[] = seedBudgets.map(budget => ({ ...budget }))
@@ -29,7 +29,7 @@ class MockBudgetRepository implements BudgetRepository {
   }
 
   async create(input: CreateBudgetInput): Promise<Budget> {
-    await simulateLatency()
+    await simulateWrite()
 
     const created: Budget = { ...input, id: generateId('bud') }
     budgets = [created, ...budgets]
@@ -37,7 +37,7 @@ class MockBudgetRepository implements BudgetRepository {
   }
 
   async update(id: string, input: UpdateBudgetInput): Promise<Budget> {
-    await simulateLatency()
+    await simulateWrite()
 
     const existing = budgets.find(budget => budget.id === id)
     if (!existing) {
@@ -50,7 +50,7 @@ class MockBudgetRepository implements BudgetRepository {
   }
 
   async remove(id: string): Promise<void> {
-    await simulateLatency()
+    await simulateWrite()
     budgets = budgets.filter(budget => budget.id !== id)
   }
 }

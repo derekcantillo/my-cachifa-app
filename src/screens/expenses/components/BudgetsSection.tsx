@@ -1,20 +1,37 @@
 import React from 'react'
 import { Text, View } from 'react-native'
-import { BudgetCategoryRow, Card, SectionHeader, Skeleton } from '@/components'
+import {
+  BudgetCategoryRow,
+  Card,
+  SectionHeader,
+  Skeleton,
+  SlidersIcon,
+} from '@/components'
 import { useTheme } from '@/theme'
 import type { BudgetRow } from '../useExpensesData'
 
 interface BudgetsSectionProps {
   rows: BudgetRow[]
   isLoading: boolean
+  /** Opens the budget management modal for the period on screen. */
+  onManagePress?: () => void
 }
 
-export function BudgetsSection({ rows, isLoading }: BudgetsSectionProps) {
+export function BudgetsSection({
+  rows,
+  isLoading,
+  onManagePress,
+}: BudgetsSectionProps) {
   const { colors, spacing, typography } = useTheme()
 
   return (
     <View style={{ gap: spacing.sm }}>
-      <SectionHeader title="Presupuestos Activos" />
+      <SectionHeader
+        title="Presupuestos Activos"
+        actionLabel={onManagePress ? 'Gestionar' : undefined}
+        onActionPress={onManagePress}
+        actionIcon={<SlidersIcon size={16} color={colors.primary} />}
+      />
 
       {isLoading ? (
         [0, 1, 2].map(row => (

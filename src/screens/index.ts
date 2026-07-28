@@ -5,3 +5,8 @@ export { GoalDetailScreen } from './goals/GoalDetailScreen'
 export { CreateGoalScreen } from './goals/CreateGoalScreen'
 export { ReportsScreen } from './reports/ReportsScreen'
 export { SettingsScreen } from './settings/SettingsScreen'
+export {
+  RegisterTransactionScreen,
+  TransactionDetailScreen,
+} from './transactions'
+export { BudgetManagementScreen } from './budgets'

@@ -10,9 +10,6 @@ export type ExpensesStackParamList = {
 
 export type GoalsStackParamList = {
   Goals: undefined
-  // Placeholder routes until sub-block 4c turns them into modals.
-  GoalDetail: { goalId: string }
-  CreateGoal: undefined
 }
 
 export type ReportsStackParamList = {
@@ -26,11 +23,22 @@ export type MainTabParamList = {
   ReportsTab: NavigatorScreenParams<ReportsStackParamList>
 }
 
-// Settings sits outside the tab bar: the design reaches it from the avatar in
-// the app header, so it lives at the root instead.
+/**
+ * Settings and the five modals sit outside the tab bar: the design reaches
+ * Settings from the avatar in the app header, and every modal can be opened
+ * from more than one tab, so they all live at the root.
+ */
 export type RootStackParamList = {
   Main: NavigatorScreenParams<MainTabParamList>
   Settings: undefined
+  /** Doubles as the edit form when `transactionId` is given. */
+  RegisterTransaction: { transactionId?: string } | undefined
+  TransactionDetail: { transactionId: string }
+  /** Doubles as the edit form when `goalId` is given. */
+  CreateGoal: { goalId?: string } | undefined
+  GoalDetail: { goalId: string }
+  /** Period to plan, formatted 'YYYY-MM'. */
+  BudgetManagement: { month: string }
 }
 
 // Lets useNavigation()/useRoute() infer types app-wide without repeating generics.

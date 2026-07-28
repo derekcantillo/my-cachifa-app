@@ -9,3 +9,18 @@ export function useTransactions(params?: ListTransactionsParams) {
     queryFn: () => transactionRepository.list(params),
   })
 }
+
+/**
+ * A single movement, for the detail screen. Resolves to `null` when it is gone.
+ * Pass `enabled: false` on the create path, where there is nothing to load yet.
+ */
+export function useTransaction(
+  id: string,
+  options: { enabled?: boolean } = {},
+) {
+  return useQuery({
+    queryKey: queryKeys.transaction(id),
+    queryFn: () => transactionRepository.getById(id),
+    enabled: options.enabled ?? true,
+  })
+}

@@ -97,6 +97,59 @@ export function CheckCircleIcon(props: IconProps) {
   )
 }
 
+export function CloseIcon(props: IconProps) {
+  return <BaseIcon {...props} paths={['M6 6l12 12', 'M18 6 6 18']} />
+}
+
+export function TrashIcon(props: IconProps) {
+  return (
+    <BaseIcon
+      {...props}
+      paths={[
+        'M4.5 7h15',
+        'M9.5 7V5h5v2',
+        'M6.5 7l1 12.5h9L17.5 7',
+        'M10.5 10.5v6',
+        'M13.5 10.5v6',
+      ]}
+    />
+  )
+}
+
+export function PencilIcon(props: IconProps) {
+  return (
+    <BaseIcon
+      {...props}
+      paths={[
+        'M4.5 19.5h4L19 9a2.1 2.1 0 0 0-3-3L5.5 16.5v3z',
+        'M14.5 7.5l3 3',
+      ]}
+    />
+  )
+}
+
+export function PauseIcon(props: IconProps) {
+  return <BaseIcon {...props} paths={['M9.5 6v12', 'M14.5 6v12']} />
+}
+
+export function PlayIcon(props: IconProps) {
+  return <BaseIcon {...props} paths={['M8 5.5v13l11-6.5z']} />
+}
+
+export function SlidersIcon(props: IconProps) {
+  return (
+    <BaseIcon
+      {...props}
+      paths={[
+        'M5 8h14',
+        'M5 16h14',
+        'M9.5 8a1.6 1.6 0 1 0 0-.1z',
+        'M14.5 16a1.6 1.6 0 1 0 0-.1z',
+      ]}
+    />
+  )
+}
+
 export function FilterIcon(props: IconProps) {
   return <BaseIcon {...props} paths={['M4 7h16', 'M7 12h10', 'M10 17h4']} />
 }

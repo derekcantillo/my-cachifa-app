@@ -26,6 +26,10 @@ export interface CreateGoalInput {
   targetAmount: number
   phase: GoalPhase
   targetDate?: string
+  /** Amount already saved towards the goal when it is created. Defaults to 0. */
+  currentAmount?: number
+  /** Defaults to 'active'. */
+  status?: GoalStatus
 }
 
 export type UpdateGoalInput = Partial<CreateGoalInput> & { status?: GoalStatus }

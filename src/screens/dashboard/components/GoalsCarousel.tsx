@@ -9,6 +9,7 @@ interface GoalsCarouselProps {
   /** Horizontal padding to bleed against, so cards align with the screen. */
   edgeInset: number
   onSeeAllPress?: () => void
+  onGoalPress?: (goal: Goal) => void
 }
 
 const CARD_WIDTH = 240
@@ -17,6 +18,7 @@ export function GoalsCarousel({
   goals,
   edgeInset,
   onSeeAllPress,
+  onGoalPress,
 }: GoalsCarouselProps) {
   const { colors, spacing, typography } = useTheme()
 
@@ -50,7 +52,9 @@ export function GoalsCarousel({
             paddingHorizontal: edgeInset,
             gap: spacing.sm,
           }}
-          renderItem={({ item }) => <GoalCard goal={item} width={CARD_WIDTH} />}
+          renderItem={({ item }) => (
+            <GoalCard goal={item} width={CARD_WIDTH} onPress={onGoalPress} />
+          )}
         />
       )}
     </View>

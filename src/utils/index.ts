@@ -15,6 +15,7 @@ export {
 } from './date'
 export type { MonthKey } from './date'
 export { withAlpha } from './color'
+export { monthsUntil, monthlySavingNeeded } from './savings'
 export { indexById } from './collections'
 export {
   sumAmount,

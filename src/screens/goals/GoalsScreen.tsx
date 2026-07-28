@@ -6,11 +6,7 @@ import {
   Text,
   View,
 } from 'react-native'
-import {
-  useNavigation,
-  type CompositeNavigationProp,
-} from '@react-navigation/native'
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
+import { useNavigation } from '@react-navigation/native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import type { Goal } from '@/api/types'
 import {
@@ -20,25 +16,14 @@ import {
   SectionHeader,
   Skeleton,
 } from '@/components'
-import type {
-  GoalsStackParamList,
-  RootStackParamList,
-} from '@/navigation/types'
 import { useTheme } from '@/theme'
 import { formatCurrency } from '@/utils'
 import { CreateGoalButton, SavingsProjectionCard } from './components'
 import { useGoalsData } from './useGoalsData'
 
-// The screen pushes onto its own stack (goal detail, create goal) and reaches
-// Settings at the root, so it needs both navigators' types.
-type GoalsNavigation = CompositeNavigationProp<
-  NativeStackNavigationProp<GoalsStackParamList, 'Goals'>,
-  NativeStackNavigationProp<RootStackParamList>
->
-
 export function GoalsScreen() {
   const { colors, spacing, typography } = useTheme()
-  const navigation = useNavigation<GoalsNavigation>()
+  const navigation = useNavigation()
 
   const {
     goals,
@@ -55,8 +40,6 @@ export function GoalsScreen() {
     navigation.navigate('Settings')
   }, [navigation])
 
-  // Goal detail and creation are modals in sub-block 4c; both routes are
-  // placeholder screens for now.
   const openGoal = useCallback(
     (goal: Goal) => {
       navigation.navigate('GoalDetail', { goalId: goal.id })

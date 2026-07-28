@@ -1,5 +1,6 @@
 import type { Goal, GoalStatus } from '@/api/types'
 import { toPercent } from '@/theme'
+import { monthsUntil } from '@/utils'
 import type { BadgeTone } from '@/components/ui'
 import { getPhaseNumber, PHASE_GLYPHS, PHASE_LABELS } from './phases'
 
@@ -13,15 +14,6 @@ const STATUS_TONES: Record<GoalStatus, BadgeTone> = {
   active: 'primary',
   completed: 'positive',
   paused: 'neutral',
-}
-
-const MS_PER_DAY = 86_400_000
-const DAYS_PER_MONTH = 30.44
-
-/** Whole months between now and a target date; 0 once the date is past. */
-function monthsUntil(isoDate: string, now: Date): number {
-  const remaining = new Date(isoDate).getTime() - now.getTime()
-  return Math.max(0, Math.ceil(remaining / (DAYS_PER_MONTH * MS_PER_DAY)))
 }
 
 export interface GoalProgress {
