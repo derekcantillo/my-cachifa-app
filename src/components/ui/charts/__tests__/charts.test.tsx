@@ -6,14 +6,23 @@ import { LineChart, PieChart } from '..'
 
 const mounted: ReactTestRenderer[] = []
 
-// gifted-charts animates its data points in, so a tree left mounted keeps
-// timers running past the end of the test run.
+// The line chart animates itself in on mount, and those timers outlive the
+// test unless they are run to completion, taking the Jest environment with
+// them when they fire. Fake timers keep them inside the test.
+beforeEach(() => {
+  jest.useFakeTimers()
+})
+
 afterEach(() => {
   mounted.splice(0).forEach(tree => {
     act(() => {
       tree.unmount()
     })
   })
+  act(() => {
+    jest.runOnlyPendingTimers()
+  })
+  jest.useRealTimers()
 })
 
 function render(element: React.ReactElement): ReactTestRenderer {
@@ -66,8 +75,9 @@ describe('LineChart', () => {
     layout(tree, 320)
 
     // The marker's callout is rendered alongside the line.
-    expect(tree.root.findAllByProps({ children: 'Venta del carro' }).length)
-      .toBeGreaterThan(0)
+    expect(
+      tree.root.findAllByProps({ children: 'Venta del carro' }).length,
+    ).toBeGreaterThan(0)
   })
 
   it('renders nothing but its spacer when there is no data', () => {
