@@ -50,6 +50,7 @@ export const seedCategories: Category[] = [
     kind: 'expense',
     icon: 'utensils',
     color: '#F97316',
+    description: 'Restaurantes, domicilios',
   },
   {
     id: 'cat-transporte',
@@ -57,6 +58,7 @@ export const seedCategories: Category[] = [
     kind: 'expense',
     icon: 'car',
     color: '#3B82F6',
+    description: 'Gasolina, transporte público',
   },
   {
     id: 'cat-ocio',
@@ -64,6 +66,7 @@ export const seedCategories: Category[] = [
     kind: 'expense',
     icon: 'game-controller',
     color: '#A855F7',
+    description: 'Salidas, planes',
   },
   {
     id: 'cat-servicios',
@@ -71,6 +74,7 @@ export const seedCategories: Category[] = [
     kind: 'expense',
     icon: 'bolt',
     color: '#EAB308',
+    description: 'Internet, celular, luz',
   },
   {
     id: 'cat-deuda',
@@ -78,6 +82,7 @@ export const seedCategories: Category[] = [
     kind: 'expense',
     icon: 'credit-card',
     color: '#EF4444',
+    description: 'Cuotas y tarjetas',
   },
   {
     id: 'cat-vivienda',
@@ -85,6 +90,7 @@ export const seedCategories: Category[] = [
     kind: 'expense',
     icon: 'home',
     color: '#0EA5E9',
+    description: 'Arriendo, administración',
   },
   {
     id: 'cat-mercado',
@@ -92,6 +98,7 @@ export const seedCategories: Category[] = [
     kind: 'expense',
     icon: 'shopping-cart',
     color: '#22C55E',
+    description: 'Comida, aseo',
   },
   {
     id: 'cat-entretenimiento',
@@ -99,6 +106,7 @@ export const seedCategories: Category[] = [
     kind: 'expense',
     icon: 'film',
     color: '#EC4899',
+    description: 'Suscripciones, cine',
   },
   {
     id: 'cat-salario',
@@ -106,6 +114,7 @@ export const seedCategories: Category[] = [
     kind: 'income',
     icon: 'banknote',
     color: '#16A34A',
+    description: 'Sueldo y quincenas',
   },
   {
     id: 'cat-ahorro',
@@ -113,6 +122,7 @@ export const seedCategories: Category[] = [
     kind: 'saving',
     icon: 'piggy-bank',
     color: '#2563EB',
+    description: 'Lo que apartas cada mes',
   },
 ]
 

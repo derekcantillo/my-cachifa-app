@@ -7,4 +7,6 @@ export interface Category {
   kind: TransactionKind
   icon: string
   color: string
+  /** Examples of what belongs here, shown under the name when budgeting. */
+  description?: string
 }

@@ -24,6 +24,8 @@ export interface GoalProgress {
   glyph: string
   /** Reads "Fase 3 · Mediano plazo". */
   phaseLabel: string
+  /** Just "Fase 3", for the badge on a card. */
+  shortPhaseLabel: string
   statusLabel: string
   statusTone: BadgeTone
   /** Months left until the target date; `null` when the goal has none. */
@@ -50,6 +52,7 @@ export function getGoalProgress(
     phaseLabel: `Fase ${getPhaseNumber(goal.phase)} · ${
       PHASE_LABELS[goal.phase]
     }`,
+    shortPhaseLabel: `Fase ${getPhaseNumber(goal.phase)}`,
     statusLabel: STATUS_LABELS[goal.status],
     statusTone: STATUS_TONES[goal.status],
     monthsRemaining: goal.targetDate ? monthsUntil(goal.targetDate, now) : null,

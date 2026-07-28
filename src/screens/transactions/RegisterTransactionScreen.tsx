@@ -1,18 +1,10 @@
 import React, { useCallback, useMemo } from 'react'
-import {
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native'
+import { StyleSheet, Text, View } from 'react-native'
 import {
   useNavigation,
   useRoute,
   type RouteProp,
 } from '@react-navigation/native'
-import { SafeAreaView } from 'react-native-safe-area-context'
 import type {
   Account,
   Category,
@@ -22,13 +14,16 @@ import type {
 import {
   Button,
   CategoryIcon,
+  CheckCircleIcon,
   CurrencyField,
   DateField,
   ErrorNotice,
-  ModalHeader,
+  InfoCallout,
+  ModalScreen,
   OptionChips,
   SegmentedControl,
   Skeleton,
+  StarIcon,
   TextField,
   ToggleRow,
   type ChipOption,
@@ -43,6 +38,7 @@ import {
 } from '@/hooks'
 import type { RootStackParamList } from '@/navigation/types'
 import { getCategoryColor, useTheme } from '@/theme'
+import { formatCurrency } from '@/utils'
 import { useCategoriesForKind, useTransactionForm } from './useTransactionForm'
 
 const KIND_OPTIONS: ReadonlyArray<SegmentedControlOption<TransactionKind>> = [
@@ -50,6 +46,19 @@ const KIND_OPTIONS: ReadonlyArray<SegmentedControlOption<TransactionKind>> = [
   { value: 'income', label: 'Ingreso' },
   { value: 'saving', label: 'Ahorro' },
 ]
+
+/** The amount question changes with what is being registered. */
+const AMOUNT_LABELS: Record<TransactionKind, string> = {
+  expense: 'Valor (COP)',
+  income: '¿Cuánto recibiste?',
+  saving: '¿Cuánto vas a guardar?',
+}
+
+const SUBMIT_LABELS: Record<TransactionKind, string> = {
+  expense: 'Registrar gasto',
+  income: 'Registrar ingreso',
+  saving: 'Registrar ahorro',
+}
 
 type RegisterRoute = RouteProp<RootStackParamList, 'RegisterTransaction'>
 
@@ -79,27 +88,37 @@ export function RegisterTransactionScreen() {
 
   if (isLoading) {
     return (
-      <FormShell title={title}>
+      <ModalScreen
+        title={title}
+        onClose={navigation.goBack}
+        leading="close"
+        grabber
+      >
         <Skeleton height={44} radius={14} />
         <Skeleton height={72} radius={14} />
         <Skeleton height={44} radius={14} />
         <Skeleton height={44} radius={14} />
-      </FormShell>
+      </ModalScreen>
     )
   }
 
   if (isEditing && !transactionQuery.data) {
     return (
-      <FormShell title={title}>
+      <ModalScreen
+        title={title}
+        onClose={navigation.goBack}
+        leading="close"
+        grabber
+      >
         <Text style={{ color: colors.textSecondary, marginBottom: spacing.md }}>
           Este movimiento ya no existe.
         </Text>
         <Button
           label="Volver"
           variant="secondary"
-          onPress={() => navigation.goBack()}
+          onPress={navigation.goBack}
         />
-      </FormShell>
+      </ModalScreen>
     )
   }
 
@@ -186,21 +205,38 @@ function TransactionForm({
   }, [createTransaction, form, navigation, transaction, updateTransaction])
 
   return (
-    <FormShell title={title}>
+    <ModalScreen
+      title={title}
+      onClose={navigation.goBack}
+      leading="close"
+      grabber
+      footer={
+        <Button
+          label={
+            transaction ? 'Guardar cambios' : SUBMIT_LABELS[form.values.kind]
+          }
+          onPress={handleSubmit}
+          loading={isSaving}
+          icon={<CheckCircleIcon size={20} color={colors.brandText} />}
+        />
+      }
+    >
       <SegmentedControl
         options={KIND_OPTIONS}
         value={form.values.kind}
         onChange={form.setKind}
       />
 
-      <CurrencyField
-        label="Monto"
-        value={form.values.amount}
-        onChange={form.setAmount}
-        error={form.errors.amount}
-        autoFocus={!transaction}
-        large
-      />
+      <View style={{ paddingVertical: spacing.sm }}>
+        <CurrencyField
+          label={AMOUNT_LABELS[form.values.kind]}
+          value={form.values.amount}
+          onChange={form.setAmount}
+          error={form.errors.amount}
+          autoFocus={!transaction}
+          hero
+        />
+      </View>
 
       <OptionChips
         label="Categoría"
@@ -208,15 +244,14 @@ function TransactionForm({
         value={form.values.categoryId}
         onChange={form.setCategoryId}
         error={form.errors.categoryId}
-        wrap
       />
 
       <TextField
-        label="Descripción"
+        label="Descripción (Opcional)"
         value={form.values.description}
         onChangeText={form.setDescription}
-        placeholder="Ej. Almuerzo con el equipo"
-        error={form.errors.description}
+        placeholder="Ej: Almuerzo de trabajo"
+        tone="filled"
       />
 
       <DateField
@@ -224,6 +259,7 @@ function TransactionForm({
         value={form.values.date}
         onChange={form.setDate}
         maximumDate={new Date()}
+        tone="filled"
       />
 
       <OptionChips
@@ -235,12 +271,43 @@ function TransactionForm({
       />
 
       {form.values.kind === 'income' && (
-        <ToggleRow
-          label="Prima semestral"
-          description="Márcala para que el plan la reparta entre tus metas."
-          value={form.values.semesterBonus}
-          onValueChange={form.setSemesterBonus}
-        />
+        <InfoCallout icon={<StarIcon size={20} color={colors.primary} />}>
+          <ToggleRow
+            label="¿Es la prima semestral?"
+            value={form.values.semesterBonus}
+            onValueChange={form.setSemesterBonus}
+          />
+          {form.values.semesterBonus && form.values.amount > 0 ? (
+            <View
+              style={[
+                styles.bonusAmount,
+                {
+                  backgroundColor: colors.surface,
+                  marginTop: spacing.sm,
+                  padding: spacing.sm,
+                },
+              ]}
+            >
+              <Text
+                style={{
+                  color: colors.textSecondary,
+                  fontSize: typography.fontSizes.xs,
+                }}
+              >
+                Valor que se repartirá entre tus metas:
+              </Text>
+              <Text
+                style={{
+                  color: colors.primary,
+                  fontSize: typography.fontSizes.lg,
+                  fontWeight: typography.fontWeights.bold,
+                }}
+              >
+                {formatCurrency(form.values.amount)}
+              </Text>
+            </View>
+          ) : null}
+        </InfoCallout>
       )}
 
       {form.values.kind === 'saving' && (
@@ -255,62 +322,12 @@ function TransactionForm({
       )}
 
       <ErrorNotice error={error} />
-
-      <View style={{ gap: spacing.sm }}>
-        <Button
-          label={transaction ? 'Guardar cambios' : 'Registrar'}
-          onPress={handleSubmit}
-          loading={isSaving}
-        />
-        <Button
-          label="Cancelar"
-          variant="secondary"
-          onPress={() => navigation.goBack()}
-          disabled={isSaving}
-        />
-      </View>
-    </FormShell>
-  )
-}
-
-interface FormShellProps {
-  title: string
-  children: React.ReactNode
-}
-
-/** Modal chrome shared by the loading, missing and ready states of the form. */
-function FormShell({ title, children }: FormShellProps) {
-  const { colors, spacing } = useTheme()
-  const navigation = useNavigation()
-
-  return (
-    <SafeAreaView
-      edges={['top', 'bottom']}
-      style={[styles.container, { backgroundColor: colors.background }]}
-    >
-      <ModalHeader title={title} onClose={() => navigation.goBack()} />
-
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={styles.container}
-      >
-        <ScrollView
-          keyboardShouldPersistTaps="handled"
-          contentContainerStyle={{
-            padding: spacing.md,
-            paddingBottom: spacing.xxl,
-            gap: spacing.md,
-          }}
-        >
-          {children}
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+    </ModalScreen>
   )
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
+  bonusAmount: {
+    borderRadius: 10,
   },
 })

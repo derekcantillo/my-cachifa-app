@@ -4,7 +4,12 @@ import DateTimePicker, {
   type DateTimePickerEvent,
 } from '@react-native-community/datetimepicker'
 import { useTheme } from '@/theme'
-import { formatFullDate } from '@/utils'
+import { formatDayLabel, formatMonthYear, toMonthKey } from '@/utils'
+import { CalendarIcon, ChevronDownIcon } from './icons'
+import type { FieldTone } from './TextField'
+
+/** 'day' reads "Hoy, 24 de octubre"; 'month' reads "Diciembre 2024". */
+export type DateFieldFormat = 'day' | 'month'
 
 interface DateFieldProps {
   label: string
@@ -14,6 +19,8 @@ interface DateFieldProps {
   maximumDate?: Date
   minimumDate?: Date
   error?: string
+  format?: DateFieldFormat
+  tone?: FieldTone
 }
 
 /**
@@ -27,6 +34,8 @@ export function DateField({
   maximumDate,
   minimumDate,
   error,
+  format = 'day',
+  tone = 'outlined',
 }: DateFieldProps) {
   const { colors, scheme, spacing, typography } = useTheme()
   const [open, setOpen] = useState(false)
@@ -49,6 +58,11 @@ export function DateField({
     setOpen(current => !current)
   }, [])
 
+  const caption =
+    format === 'month'
+      ? formatMonthYear(toMonthKey(value))
+      : formatDayLabel(value)
+
   return (
     <View style={{ gap: spacing.xs }}>
       <Text
@@ -63,27 +77,37 @@ export function DateField({
 
       <Pressable
         accessibilityRole="button"
-        accessibilityLabel={`${label}: ${formatFullDate(value)}`}
+        accessibilityLabel={`${label}: ${caption}`}
         onPress={toggle}
         style={({ pressed }) => [
           styles.field,
           {
-            backgroundColor: colors.surfaceMuted,
+            backgroundColor:
+              tone === 'filled' ? colors.surfaceMuted : colors.surface,
             borderColor: error ? colors.negative : colors.border,
+            gap: spacing.sm,
             paddingHorizontal: spacing.md,
             paddingVertical: spacing.sm + spacing.xs,
           },
           pressed && styles.pressed,
         ]}
       >
+        <CalendarIcon size={20} color={colors.textSecondary} />
+
         <Text
-          style={{
-            color: colors.text,
-            fontSize: typography.fontSizes.md,
-          }}
+          numberOfLines={1}
+          style={[
+            styles.caption,
+            {
+              color: colors.text,
+              fontSize: typography.fontSizes.md,
+            },
+          ]}
         >
-          {formatFullDate(value)}
+          {caption}
         </Text>
+
+        <ChevronDownIcon size={18} color={colors.textSecondary} />
       </Pressable>
 
       {open && (
@@ -111,8 +135,13 @@ export function DateField({
 
 const styles = StyleSheet.create({
   field: {
+    flexDirection: 'row',
+    alignItems: 'center',
     borderRadius: 14,
-    borderWidth: StyleSheet.hairlineWidth,
+    borderWidth: 1,
+  },
+  caption: {
+    flex: 1,
   },
   pressed: {
     opacity: 0.7,

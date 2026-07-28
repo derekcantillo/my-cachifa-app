@@ -1,6 +1,6 @@
 export { ScreenPlaceholder } from './ScreenPlaceholder'
 export * from './ui'
-export { AppHeader, SectionHeader } from './layout'
+export { AppHeader, SectionHeader, ModalScreen } from './layout'
 export { TransactionListItem } from './transactions'
 export {
   GoalCard,

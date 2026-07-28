@@ -1,24 +1,24 @@
 import React, { useCallback } from 'react'
-import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native'
+import { Alert, StyleSheet, Text, View } from 'react-native'
 import {
   useNavigation,
   useRoute,
   type RouteProp,
 } from '@react-navigation/native'
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack'
-import { SafeAreaView } from 'react-native-safe-area-context'
 import type { Transaction } from '@/api/types'
 import {
   Badge,
-  Button,
   Card,
   CategoryIcon,
   ErrorNotice,
-  ModalHeader,
+  ModalHeaderAction,
+  ModalScreen,
   PencilIcon,
   Separator,
   Skeleton,
   TrashIcon,
+  WalletIcon,
 } from '@/components'
 import {
   useAccounts,
@@ -27,12 +27,12 @@ import {
   useTransaction,
 } from '@/hooks'
 import type { RootStackParamList } from '@/navigation/types'
-import { getCategoryColor, useTheme } from '@/theme'
+import { useTheme } from '@/theme'
 import {
   formatCurrency,
   formatFullDate,
-  indexById,
   formatRelativeTime,
+  indexById,
 } from '@/utils'
 import { SEMESTER_BONUS_TAG } from './useTransactionForm'
 
@@ -42,16 +42,18 @@ type DetailNavigation = NativeStackNavigationProp<
   'TransactionDetail'
 >
 
-const KIND_LABELS: Record<Transaction['kind'], string> = {
-  expense: 'Gasto',
-  income: 'Ingreso',
-  saving: 'Ahorro',
+const TITLES: Record<Transaction['kind'], string> = {
+  expense: 'Detalle de Gasto',
+  income: 'Detalle de Ingreso',
+  saving: 'Detalle de Ahorro',
 }
 
 const TAG_LABELS: Record<string, string> = {
   [SEMESTER_BONUS_TAG]: 'Prima semestral',
   recurrente: 'Recurrente',
 }
+
+const ICON_SIZE = 96
 
 export function TransactionDetailScreen() {
   const { colors, spacing, typography } = useTheme()
@@ -67,7 +69,7 @@ export function TransactionDetailScreen() {
 
   const transaction = transactionQuery.data
   const category = transaction
-    ? categoriesQuery.data?.find(item => item.id === transaction.categoryId)
+    ? indexById(categoriesQuery.data ?? [])[transaction.categoryId]
     : undefined
   const account = transaction
     ? indexById(accountsQuery.data ?? [])[transaction.accountId]
@@ -88,7 +90,7 @@ export function TransactionDetailScreen() {
           style: 'destructive',
           onPress: () => {
             deleteTransaction.mutate(transactionId, {
-              onSuccess: () => navigation.goBack(),
+              onSuccess: navigation.goBack,
             })
           },
         },
@@ -104,163 +106,141 @@ export function TransactionDetailScreen() {
       : colors.text
 
   return (
-    <SafeAreaView
-      edges={['top', 'bottom']}
-      style={[styles.container, { backgroundColor: colors.background }]}
+    <ModalScreen
+      title={transaction ? TITLES[transaction.kind] : 'Detalle'}
+      onClose={navigation.goBack}
+      brandTitle
+      headerActions={
+        transaction ? (
+          <>
+            <ModalHeaderAction
+              accessibilityLabel="Editar movimiento"
+              onPress={handleEdit}
+              disabled={deleteTransaction.isPending}
+            >
+              <PencilIcon size={22} color={colors.text} />
+            </ModalHeaderAction>
+            <ModalHeaderAction
+              accessibilityLabel="Eliminar movimiento"
+              onPress={handleDelete}
+              disabled={deleteTransaction.isPending}
+            >
+              <TrashIcon size={22} color={colors.negative} />
+            </ModalHeaderAction>
+          </>
+        ) : null
+      }
     >
-      <ModalHeader
-        title="Detalle del movimiento"
-        onClose={() => navigation.goBack()}
-      />
+      {transactionQuery.isPending ? (
+        <View style={[styles.summary, { gap: spacing.sm }]}>
+          <Skeleton
+            height={ICON_SIZE}
+            width={ICON_SIZE}
+            radius={ICON_SIZE / 2}
+          />
+          <Skeleton height={28} width="60%" />
+          <Skeleton height={14} width="40%" />
+        </View>
+      ) : !transaction ? (
+        <Card>
+          <Text
+            style={{
+              color: colors.textSecondary,
+              fontSize: typography.fontSizes.sm,
+            }}
+          >
+            Este movimiento ya no existe.
+          </Text>
+        </Card>
+      ) : (
+        <>
+          <View style={[styles.summary, { gap: spacing.sm }]}>
+            <CategoryIcon
+              icon={category?.icon ?? 'wallet'}
+              categoryId={category?.id}
+              size={ICON_SIZE}
+              variant="muted"
+            />
 
-      <ScrollView
-        contentContainerStyle={{
-          padding: spacing.md,
-          paddingBottom: spacing.xxl,
-          gap: spacing.md,
-        }}
-      >
-        {transactionQuery.isPending ? (
-          <Card>
-            <View style={{ gap: spacing.sm }}>
-              <Skeleton height={56} width={56} radius={28} />
-              <Skeleton height={28} width="60%" />
-              <Skeleton height={14} width="40%" />
-            </View>
-          </Card>
-        ) : !transaction ? (
-          <Card>
+            <Badge label={category?.name ?? 'Sin categoría'} />
+
             <Text
               style={{
-                color: colors.textSecondary,
-                fontSize: typography.fontSizes.sm,
+                color: amountColor,
+                fontSize: typography.fontSizes.xxl,
+                fontWeight: typography.fontWeights.bold,
               }}
             >
-              Este movimiento ya no existe.
-            </Text>
-          </Card>
-        ) : (
-          <>
-            <Card>
-              <View style={styles.summary}>
-                <CategoryIcon
-                  icon={category?.icon ?? 'wallet'}
-                  categoryId={category?.id}
-                  size={56}
-                />
-
-                <Text
-                  style={{
-                    color: amountColor,
-                    fontSize: typography.fontSizes.xxl,
-                    fontWeight: typography.fontWeights.bold,
-                    marginTop: spacing.sm,
-                  }}
-                >
-                  {formatCurrency(
-                    transaction.kind === 'expense'
-                      ? -transaction.amount
-                      : transaction.amount,
-                    { signed: true },
-                  )}
-                </Text>
-
-                <Text
-                  style={{
-                    color: colors.text,
-                    fontSize: typography.fontSizes.md,
-                    fontWeight: typography.fontWeights.semibold,
-                    marginTop: spacing.xs,
-                  }}
-                >
-                  {transaction.description}
-                </Text>
-
-                <Text
-                  style={{
-                    color: colors.textSecondary,
-                    fontSize: typography.fontSizes.sm,
-                  }}
-                >
-                  {formatFullDate(new Date(transaction.date))}
-                </Text>
-
-                <View style={{ marginTop: spacing.sm }}>
-                  <Badge
-                    label={KIND_LABELS[transaction.kind]}
-                    color={getCategoryColor(category)}
-                  />
-                </View>
-              </View>
-            </Card>
-
-            <Card>
-              <DetailRow
-                label="Categoría"
-                value={category?.name ?? 'Sin categoría'}
-              />
-              <Separator />
-              <DetailRow label="Cuenta" value={account?.name ?? 'Sin cuenta'} />
-              <Separator />
-              <DetailRow
-                label="Registrado"
-                value={formatRelativeTime(transaction.createdAt)}
-              />
-
-              {transaction.tags.length > 0 && (
-                <>
-                  <Separator />
-                  <View
-                    style={{ paddingVertical: spacing.sm, gap: spacing.xs }}
-                  >
-                    <Text
-                      style={{
-                        color: colors.textSecondary,
-                        fontSize: typography.fontSizes.sm,
-                      }}
-                    >
-                      Etiquetas
-                    </Text>
-                    <View style={[styles.tags, { gap: spacing.xs }]}>
-                      {transaction.tags.map(tag => (
-                        <Badge key={tag} label={TAG_LABELS[tag] ?? tag} />
-                      ))}
-                    </View>
-                  </View>
-                </>
+              {formatCurrency(
+                transaction.kind === 'expense'
+                  ? -transaction.amount
+                  : transaction.amount,
+                { signed: true },
               )}
-            </Card>
+            </Text>
+          </View>
 
-            <ErrorNotice error={deleteTransaction.error} />
+          <Card>
+            <DetailRow
+              label="Fecha"
+              value={formatFullDate(new Date(transaction.date))}
+            />
+            <Separator />
+            <DetailRow label="Descripción" value={transaction.description} />
+            <Separator />
+            <DetailRow
+              label="Cuenta"
+              value={account?.name ?? 'Sin cuenta'}
+              icon={<WalletIcon size={18} color={colors.primary} />}
+            />
+            <Separator />
+            <DetailRow
+              label="Registrado"
+              value={formatRelativeTime(transaction.createdAt)}
+            />
 
-            <View style={{ gap: spacing.sm }}>
-              <Button
-                label="Editar"
-                onPress={handleEdit}
-                icon={<PencilIcon size={18} color={colors.brandText} />}
-                disabled={deleteTransaction.isPending}
-              />
-              <Button
-                label="Eliminar"
-                variant="danger"
-                onPress={handleDelete}
-                loading={deleteTransaction.isPending}
-                icon={<TrashIcon size={18} color={colors.negative} />}
-              />
-            </View>
-          </>
-        )}
-      </ScrollView>
-    </SafeAreaView>
+            {transaction.tags.length > 0 && (
+              <>
+                <Separator />
+                <View style={[styles.tagsRow, { paddingVertical: spacing.sm }]}>
+                  <Text
+                    style={{
+                      color: colors.textSecondary,
+                      fontSize: typography.fontSizes.sm,
+                    }}
+                  >
+                    Etiquetas
+                  </Text>
+                  <View style={[styles.tags, { gap: spacing.xs }]}>
+                    {transaction.tags.map(tag => (
+                      <Badge
+                        key={tag}
+                        label={TAG_LABELS[tag] ?? tag}
+                        tone={
+                          tag === SEMESTER_BONUS_TAG ? 'primary' : 'positive'
+                        }
+                      />
+                    ))}
+                  </View>
+                </View>
+              </>
+            )}
+          </Card>
+
+          <ErrorNotice error={deleteTransaction.error} />
+        </>
+      )}
+    </ModalScreen>
   )
 }
 
 interface DetailRowProps {
   label: string
   value: string
+  icon?: React.ReactNode
 }
 
-function DetailRow({ label, value }: DetailRowProps) {
+function DetailRow({ label, value, icon }: DetailRowProps) {
   const { colors, spacing, typography } = useTheme()
 
   return (
@@ -273,41 +253,52 @@ function DetailRow({ label, value }: DetailRowProps) {
       >
         {label}
       </Text>
-      <Text
-        numberOfLines={1}
-        style={[
-          styles.rowValue,
-          {
-            color: colors.text,
-            fontSize: typography.fontSizes.sm,
-            fontWeight: typography.fontWeights.medium,
-          },
-        ]}
-      >
-        {value}
-      </Text>
+
+      <View style={[styles.rowValue, { gap: spacing.xs }]}>
+        {icon}
+        <Text
+          style={[
+            styles.rowText,
+            {
+              color: colors.text,
+              fontSize: typography.fontSizes.sm,
+              fontWeight: typography.fontWeights.medium,
+            },
+          ]}
+        >
+          {value}
+        </Text>
+      </View>
     </View>
   )
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
   summary: {
     alignItems: 'center',
   },
   row: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     justifyContent: 'space-between',
   },
   rowValue: {
+    flexDirection: 'row',
+    alignItems: 'center',
     flexShrink: 1,
     marginLeft: 16,
+  },
+  rowText: {
+    textAlign: 'right',
+  },
+  tagsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   tags: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+    justifyContent: 'flex-end',
   },
 })

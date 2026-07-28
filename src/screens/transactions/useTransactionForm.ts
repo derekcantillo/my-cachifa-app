@@ -22,8 +22,19 @@ export interface TransactionFormValues {
 }
 
 export type TransactionFormErrors = Partial<
-  Record<'amount' | 'categoryId' | 'accountId' | 'description', string>
+  Record<'amount' | 'categoryId' | 'accountId', string>
 >
+
+/** Stands in for an empty description, which the form leaves optional. */
+const KIND_FALLBACK_DESCRIPTIONS: Record<TransactionKind, string> = {
+  expense: 'Gasto',
+  income: 'Ingreso',
+  saving: 'Ahorro',
+}
+
+function fallbackDescription(values: TransactionFormValues): string {
+  return KIND_FALLBACK_DESCRIPTIONS[values.kind]
+}
 
 interface UseTransactionFormOptions {
   /** Movement being edited; leaving it out starts an empty expense. */
@@ -130,9 +141,6 @@ export function useTransactionForm({
     if (!values.accountId) {
       nextErrors.accountId = 'Elige una cuenta.'
     }
-    if (!values.description.trim()) {
-      nextErrors.description = 'Escribe una descripción.'
-    }
 
     setErrors(nextErrors)
 
@@ -150,7 +158,9 @@ export function useTransactionForm({
       categoryId: values.categoryId,
       accountId: values.accountId,
       date: values.date.toISOString(),
-      description: values.description.trim(),
+      // The description is optional; the category names the movement when the
+      // user leaves it empty.
+      description: values.description.trim() || fallbackDescription(values),
       tags:
         values.kind === 'income' && values.semesterBonus
           ? [...passthroughTags, SEMESTER_BONUS_TAG]

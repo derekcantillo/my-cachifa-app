@@ -8,6 +8,9 @@ import {
 } from 'react-native'
 import { useTheme } from '@/theme'
 
+/** 'outlined' sits on a card, 'filled' on the plain sheet background. */
+export type FieldTone = 'outlined' | 'filled'
+
 interface TextFieldProps {
   label: string
   value: string
@@ -21,6 +24,7 @@ interface TextFieldProps {
   autoFocus?: boolean
   multiline?: boolean
   editable?: boolean
+  tone?: FieldTone
 }
 
 export function TextField({
@@ -34,6 +38,7 @@ export function TextField({
   autoFocus = false,
   multiline = false,
   editable = true,
+  tone = 'outlined',
 }: TextFieldProps) {
   const { colors, spacing, typography } = useTheme()
 
@@ -63,7 +68,8 @@ export function TextField({
           styles.input,
           multiline && styles.multiline,
           {
-            backgroundColor: colors.surfaceMuted,
+            backgroundColor:
+              tone === 'filled' ? colors.surfaceMuted : colors.surface,
             borderColor: error ? colors.negative : colors.border,
             color: colors.text,
             fontSize: typography.fontSizes.md,
@@ -92,7 +98,7 @@ const MULTILINE_HEIGHT = 88
 const styles = StyleSheet.create({
   input: {
     borderRadius: 14,
-    borderWidth: StyleSheet.hairlineWidth,
+    borderWidth: 1,
   },
   multiline: {
     height: MULTILINE_HEIGHT,

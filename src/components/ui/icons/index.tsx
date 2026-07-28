@@ -97,6 +97,83 @@ export function CheckCircleIcon(props: IconProps) {
   )
 }
 
+export function ArrowLeftIcon(props: IconProps) {
+  return <BaseIcon {...props} paths={['M19 12H5', 'm11 6-6 6 6 6']} />
+}
+
+export function CalendarIcon(props: IconProps) {
+  return (
+    <BaseIcon
+      {...props}
+      paths={[
+        'M4.5 6.5h15v13h-15z',
+        'M4.5 10.5h15',
+        'M8.5 4.5v4',
+        'M15.5 4.5v4',
+      ]}
+    />
+  )
+}
+
+export function ClockIcon(props: IconProps) {
+  return (
+    <BaseIcon
+      {...props}
+      paths={['M12 4a8 8 0 1 0 0 16 8 8 0 0 0 0-16z', 'M12 7.5V12l3 2']}
+    />
+  )
+}
+
+export function LightbulbIcon(props: IconProps) {
+  return (
+    <BaseIcon
+      {...props}
+      paths={[
+        'M12 3.5a5.5 5.5 0 0 0-3.2 10c.5.4.7.9.7 1.5h5c0-.6.2-1.1.7-1.5A5.5 5.5 0 0 0 12 3.5z',
+        'M10 18.5h4',
+        'M10.5 20.5h3',
+      ]}
+    />
+  )
+}
+
+export function RefreshIcon(props: IconProps) {
+  return (
+    <BaseIcon
+      {...props}
+      paths={['M19 12a7 7 0 1 1-2.1-5', 'M19.5 4.5V9h-4.5']}
+    />
+  )
+}
+
+export function PlusCircleIcon(props: IconProps) {
+  return (
+    <BaseIcon
+      {...props}
+      paths={[
+        'M12 3.5a8.5 8.5 0 1 0 0 17 8.5 8.5 0 0 0 0-17z',
+        'M12 8.5v7',
+        'M8.5 12h7',
+      ]}
+    />
+  )
+}
+
+export function StarIcon(props: IconProps) {
+  return (
+    <BaseIcon
+      {...props}
+      paths={[
+        'm12 4 2.4 4.9 5.4.8-3.9 3.8.9 5.4-4.8-2.5-4.8 2.5.9-5.4-3.9-3.8 5.4-.8z',
+      ]}
+    />
+  )
+}
+
+export function ChevronDownIcon(props: IconProps) {
+  return <BaseIcon {...props} paths={['m5 9.5 7 6 7-6']} />
+}
+
 export function CloseIcon(props: IconProps) {
   return <BaseIcon {...props} paths={['M6 6l12 12', 'M18 6 6 18']} />
 }

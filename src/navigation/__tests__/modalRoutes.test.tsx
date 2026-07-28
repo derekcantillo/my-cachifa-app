@@ -99,7 +99,8 @@ describe('root modal routes', () => {
     })
     await settle()
 
-    expect(hasText(rendered, 'Detalle del movimiento')).toBe(true)
+    // The title names the kind of movement, as the design does.
+    expect(hasText(rendered, 'Detalle de Gasto')).toBe(true)
     expect(hasText(rendered, 'Almuerzos de la semana')).toBe(true)
   })
 
@@ -126,8 +127,9 @@ describe('root modal routes', () => {
     })
     await settle()
 
-    expect(hasText(rendered, 'Detalle de la meta')).toBe(true)
-    expect(hasText(rendered, 'Historial de aportes')).toBe(true)
+    expect(hasText(rendered, 'Fondo de emergencia')).toBe(true)
+    expect(hasText(rendered, 'Historial de Ahorro')).toBe(true)
+    expect(hasText(rendered, 'Fecha Límite')).toBe(true)
   })
 
   it('opens budget management for a period', async () => {
@@ -141,7 +143,9 @@ describe('root modal routes', () => {
     })
     await settle()
 
-    expect(hasText(rendered, 'Gestionar presupuesto')).toBe(true)
-    expect(hasText(rendered, 'Límites por categoría')).toBe(true)
+    expect(hasText(rendered, 'Gestión de Presupuesto')).toBe(true)
+    expect(hasText(rendered, 'Presupuesto total planeado')).toBe(true)
+    // Only categories that already have a limit are listed.
+    expect(hasText(rendered, 'Vivienda')).toBe(true)
   })
 })

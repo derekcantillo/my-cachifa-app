@@ -5,6 +5,8 @@ export {
   formatMonthName,
   formatMonthShort,
   formatFullDate,
+  formatShortDate,
+  formatDayLabel,
   formatRelativeTime,
   formatDayMonth,
   daysLeftInMonth,

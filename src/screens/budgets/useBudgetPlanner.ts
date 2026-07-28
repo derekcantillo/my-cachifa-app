@@ -12,6 +12,8 @@ export interface BudgetPlanRow {
   savedLimit: number
   /** Limit as currently edited on screen. */
   limit: number
+  /** True for a row the user just added, which opens straight into editing. */
+  isNew: boolean
 }
 
 export interface BudgetPlan {
@@ -19,6 +21,8 @@ export interface BudgetPlan {
   expenseRows: BudgetPlanRow[]
   /** Saving targets, kept apart because they are not money to spend. */
   savingRows: BudgetPlanRow[]
+  /** Expense categories with no limit yet, offered by "Añadir categoría". */
+  availableCategories: Category[]
   /** Live sum of the edited expense limits. */
   totalPlanned: number
   /** Live sum of the edited saving targets. */
@@ -27,28 +31,12 @@ export interface BudgetPlan {
   isLoading: boolean
   isError: boolean
   setLimit: (categoryId: string, limit: number) => void
+  /** Brings a category into the plan, ready to receive its first limit. */
+  addCategory: (categoryId: string) => void
   /** Drops every local edit, back to what is saved. */
   discardChanges: () => void
   /** Only the rows that actually changed, ready for the batch mutation. */
   changedLimits: () => BudgetLimitInput[]
-}
-
-function buildRows(
-  categories: readonly Category[],
-  budgetsByCategory: Record<string, Budget>,
-  edits: Record<string, number>,
-): BudgetPlanRow[] {
-  return categories.map(category => {
-    const budget = budgetsByCategory[category.id]
-    const savedLimit = budget?.monthlyLimit ?? 0
-
-    return {
-      category,
-      ...(budget ? { budgetId: budget.id } : {}),
-      savedLimit,
-      limit: edits[category.id] ?? savedLimit,
-    }
-  })
 }
 
 function sumLimits(rows: readonly BudgetPlanRow[]): number {
@@ -56,67 +44,93 @@ function sumLimits(rows: readonly BudgetPlanRow[]): number {
 }
 
 /**
- * Editable plan for a period: every category the user can budget for, with the
- * limits they have typed layered over what is saved. Nothing is written until
- * the screen asks for `changedLimits`.
+ * Editable plan for a period: the categories that already have a limit plus the
+ * ones the user brings in, with their edits layered over what is saved. Nothing
+ * is written until the screen asks for `changedLimits`.
  */
 export function useBudgetPlanner(month: MonthKey): BudgetPlan {
   const budgetsQuery = useBudgets({ month })
   const categoriesQuery = useCategories()
 
   const [edits, setEdits] = useState<Record<string, number>>({})
+  const [added, setAdded] = useState<string[]>([])
 
-  const budgetsByCategory = useMemo(() => {
-    return (budgetsQuery.data ?? []).reduce<Record<string, Budget>>(
-      (index, budget) => {
-        index[budget.categoryId] = budget
-        return index
-      },
-      {},
-    )
-  }, [budgetsQuery.data])
+  const budgetsByCategory = useMemo(
+    () =>
+      (budgetsQuery.data ?? []).reduce<Record<string, Budget>>(
+        (index, budget) => {
+          index[budget.categoryId] = budget
+          return index
+        },
+        {},
+      ),
+    [budgetsQuery.data],
+  )
 
   const categories = useMemo(
     () => categoriesQuery.data ?? [],
     [categoriesQuery.data],
   )
 
-  const expenseRows = useMemo(
-    () =>
-      buildRows(
-        categories.filter(category => category.kind === 'expense'),
-        budgetsByCategory,
-        edits,
-      ),
-    [budgetsByCategory, categories, edits],
+  const buildRows = useCallback(
+    (kind: Category['kind']): BudgetPlanRow[] =>
+      categories
+        .filter(category => category.kind === kind)
+        .filter(
+          category =>
+            budgetsByCategory[category.id] !== undefined ||
+            added.includes(category.id),
+        )
+        .map(category => {
+          const budget = budgetsByCategory[category.id]
+          const savedLimit = budget?.monthlyLimit ?? 0
+
+          return {
+            category,
+            ...(budget ? { budgetId: budget.id } : {}),
+            savedLimit,
+            limit: edits[category.id] ?? savedLimit,
+            isNew: budget === undefined,
+          }
+        }),
+    [added, budgetsByCategory, categories, edits],
   )
 
-  const savingRows = useMemo(
+  const expenseRows = useMemo(() => buildRows('expense'), [buildRows])
+  const savingRows = useMemo(() => buildRows('saving'), [buildRows])
+
+  const availableCategories = useMemo(
     () =>
-      buildRows(
-        categories.filter(category => category.kind === 'saving'),
-        budgetsByCategory,
-        edits,
+      categories.filter(
+        category =>
+          category.kind === 'expense' &&
+          budgetsByCategory[category.id] === undefined &&
+          !added.includes(category.id),
       ),
-    [budgetsByCategory, categories, edits],
+    [added, budgetsByCategory, categories],
   )
 
   const setLimit = useCallback((categoryId: string, limit: number) => {
     setEdits(current => ({ ...current, [categoryId]: limit }))
   }, [])
 
-  const discardChanges = useCallback(() => {
-    setEdits({})
+  const addCategory = useCallback((categoryId: string) => {
+    setAdded(current =>
+      current.includes(categoryId) ? current : [...current, categoryId],
+    )
   }, [])
 
-  const allRows = useMemo(
-    () => [...expenseRows, ...savingRows],
-    [expenseRows, savingRows],
-  )
+  const discardChanges = useCallback(() => {
+    setEdits({})
+    setAdded([])
+  }, [])
 
   const changed = useMemo(
-    () => allRows.filter(row => row.limit !== row.savedLimit),
-    [allRows],
+    () =>
+      [...expenseRows, ...savingRows].filter(
+        row => row.limit !== row.savedLimit,
+      ),
+    [expenseRows, savingRows],
   )
 
   const changedLimits = useCallback(
@@ -132,12 +146,14 @@ export function useBudgetPlanner(month: MonthKey): BudgetPlan {
   return {
     expenseRows,
     savingRows,
+    availableCategories,
     totalPlanned: sumLimits(expenseRows),
     totalSaving: sumLimits(savingRows),
     hasChanges: changed.length > 0,
     isLoading: budgetsQuery.isPending || categoriesQuery.isPending,
     isError: budgetsQuery.isError || categoriesQuery.isError,
     setLimit,
+    addCategory,
     discardChanges,
     changedLimits,
   }

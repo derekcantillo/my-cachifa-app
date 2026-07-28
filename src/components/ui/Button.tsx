@@ -11,7 +11,14 @@ import {
 import { useTheme } from '@/theme'
 import { withAlpha } from '@/utils'
 
-export type ButtonVariant = 'primary' | 'secondary' | 'danger'
+const TRANSPARENT = 'transparent'
+
+export type ButtonVariant =
+  | 'primary'
+  | 'secondary'
+  | 'outline'
+  | 'ghost'
+  | 'danger'
 
 interface ButtonProps {
   label: string
@@ -36,19 +43,25 @@ export function Button({
 }: ButtonProps) {
   const { colors, spacing, typography } = useTheme()
 
-  const palette: Record<ButtonVariant, { background: string; text: string }> = {
+  const palette: Record<
+    ButtonVariant,
+    { background: string; text: string; border?: string }
+  > = {
     primary: { background: colors.brand, text: colors.brandText },
     secondary: {
       background: withAlpha(colors.textSecondary, 0.12),
       text: colors.text,
     },
-    danger: {
-      background: withAlpha(colors.negative, 0.14),
-      text: colors.negative,
+    outline: {
+      background: TRANSPARENT,
+      text: colors.primary,
+      border: colors.primary,
     },
+    ghost: { background: TRANSPARENT, text: colors.text },
+    danger: { background: TRANSPARENT, text: colors.negative },
   }
 
-  const { background, text } = palette[variant]
+  const { background, text, border } = palette[variant]
   const blocked = disabled || loading
 
   return (
@@ -62,6 +75,8 @@ export function Button({
         styles.button,
         {
           backgroundColor: background,
+          borderWidth: border ? 1 : 0,
+          borderColor: border ?? TRANSPARENT,
           gap: spacing.sm,
           paddingVertical: spacing.md,
           paddingHorizontal: spacing.lg,

@@ -1,39 +1,28 @@
 import React, { useCallback, useMemo } from 'react'
-import {
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native'
+import { StyleSheet, Text, View } from 'react-native'
 import {
   useNavigation,
   useRoute,
   type RouteProp,
 } from '@react-navigation/native'
-import { SafeAreaView } from 'react-native-safe-area-context'
-import type { Goal, GoalPhase } from '@/api/types'
+import type { Goal } from '@/api/types'
 import {
   Button,
+  Card,
+  CheckCircleIcon,
   CurrencyField,
   DateField,
   ErrorNotice,
   GoalCard,
-  ModalHeader,
-  OptionChips,
-  PHASE_GLYPHS,
-  PHASE_LABELS,
-  PHASE_ORDER,
-  SectionHeader,
+  ModalScreen,
   Skeleton,
   TextField,
   ToggleRow,
-  type ChipOption,
 } from '@/components'
 import { useCreateGoal, useGoal, useUpdateGoal } from '@/hooks'
 import type { RootStackParamList } from '@/navigation/types'
 import { useTheme } from '@/theme'
+import { PhaseSelector } from './components'
 import {
   defaultTargetDate,
   toPreviewGoal,
@@ -42,13 +31,6 @@ import {
 } from './useGoalForm'
 
 type CreateGoalRoute = RouteProp<RootStackParamList, 'CreateGoal'>
-
-const PHASE_OPTIONS: ReadonlyArray<ChipOption<GoalPhase>> = PHASE_ORDER.map(
-  phase => ({
-    value: phase,
-    label: `${PHASE_GLYPHS[phase]}  ${PHASE_LABELS[phase]}`,
-  }),
-)
 
 /** Creates a goal, or edits one when the route carries a `goalId`. */
 export function CreateGoalScreen() {
@@ -64,26 +46,26 @@ export function CreateGoalScreen() {
 
   if (isEditing && goalQuery.isPending) {
     return (
-      <FormShell title={title}>
+      <ModalScreen title={title} onClose={navigation.goBack}>
         <Skeleton height={44} radius={14} />
         <Skeleton height={72} radius={14} />
         <Skeleton height={44} radius={14} />
-      </FormShell>
+      </ModalScreen>
     )
   }
 
   if (isEditing && !goalQuery.data) {
     return (
-      <FormShell title={title}>
+      <ModalScreen title={title} onClose={navigation.goBack}>
         <Text style={{ color: colors.textSecondary, marginBottom: spacing.md }}>
           Esta meta ya no existe.
         </Text>
         <Button
           label="Volver"
           variant="secondary"
-          onPress={() => navigation.goBack()}
+          onPress={navigation.goBack}
         />
-      </FormShell>
+      </ModalScreen>
     )
   }
 
@@ -97,7 +79,7 @@ interface GoalFormProps {
 }
 
 function GoalForm({ title, goal }: GoalFormProps) {
-  const { spacing } = useTheme()
+  const { colors, spacing, typography } = useTheme()
   const navigation = useNavigation()
 
   const createGoal = useCreateGoal()
@@ -130,120 +112,100 @@ function GoalForm({ title, goal }: GoalFormProps) {
   }, [createGoal, form, goal, navigation, updateGoal])
 
   return (
-    <FormShell title={title}>
-      <TextField
-        label="Nombre de la meta"
-        value={form.values.name}
-        onChangeText={form.setName}
-        placeholder="Ej. Cuota inicial del carro"
-        error={form.errors.name}
-        autoFocus={!goal}
-      />
-
-      <CurrencyField
-        label="Monto objetivo"
-        value={form.values.targetAmount}
-        onChange={form.setTargetAmount}
-        error={form.errors.targetAmount}
-      />
-
-      <CurrencyField
-        label="Ahorro actual"
-        value={form.values.currentAmount}
-        onChange={form.setCurrentAmount}
-        error={form.errors.currentAmount}
-        hint={
-          goal
-            ? 'Se actualiza desde el detalle de la meta, con cada aporte.'
-            : 'Cuánto llevas ahorrado para esta meta hoy.'
-        }
-        // Contributions own this number once the goal exists.
-        {...(goal ? { editable: false } : {})}
-      />
-
-      <DateField
-        label="Fecha objetivo"
-        value={form.values.targetDate ?? defaultTargetDate()}
-        onChange={form.setTargetDate}
-        minimumDate={new Date()}
-      />
-
-      <OptionChips
-        label="Fase"
-        options={PHASE_OPTIONS}
-        value={form.values.phase}
-        onChange={form.setPhase}
-        wrap
-      />
-
-      <ToggleRow
-        label="Meta activa"
-        description="Las metas pausadas no cuentan en tu plan del mes."
-        value={form.values.active}
-        onValueChange={form.setActive}
-      />
-
-      <View style={{ gap: spacing.sm }}>
-        <SectionHeader title="Vista previa" />
-        <GoalCard goal={preview} variant="full" />
-      </View>
-
-      <ErrorNotice error={error} />
-
-      <View style={{ gap: spacing.sm }}>
+    <ModalScreen
+      title={title}
+      onClose={navigation.goBack}
+      footer={
         <Button
           label={goal ? 'Guardar cambios' : 'Crear meta'}
           onPress={handleSubmit}
           loading={isSaving}
+          icon={<CheckCircleIcon size={20} color={colors.brandText} />}
         />
-        <Button
-          label="Cancelar"
-          variant="secondary"
-          onPress={() => navigation.goBack()}
-          disabled={isSaving}
-        />
-      </View>
-    </FormShell>
-  )
-}
-
-interface FormShellProps {
-  title: string
-  children: React.ReactNode
-}
-
-function FormShell({ title, children }: FormShellProps) {
-  const { colors, spacing } = useTheme()
-  const navigation = useNavigation()
-
-  return (
-    <SafeAreaView
-      edges={['top', 'bottom']}
-      style={[styles.container, { backgroundColor: colors.background }]}
+      }
     >
-      <ModalHeader title={title} onClose={() => navigation.goBack()} />
+      <Card>
+        <View style={{ gap: spacing.md }}>
+          <TextField
+            label="Nombre de la meta"
+            value={form.values.name}
+            onChangeText={form.setName}
+            placeholder="Ej: Viaje a Cartagena"
+            error={form.errors.name}
+            autoFocus={!goal}
+          />
 
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={styles.container}
-      >
-        <ScrollView
-          keyboardShouldPersistTaps="handled"
-          contentContainerStyle={{
-            padding: spacing.md,
-            paddingBottom: spacing.xxl,
-            gap: spacing.md,
-          }}
+          <CurrencyField
+            label="Monto objetivo (COP)"
+            value={form.values.targetAmount}
+            onChange={form.setTargetAmount}
+            error={form.errors.targetAmount}
+          />
+
+          <CurrencyField
+            label="Ahorro actual (COP)"
+            value={form.values.currentAmount}
+            onChange={form.setCurrentAmount}
+            error={form.errors.currentAmount}
+            editable={!goal}
+            {...(goal
+              ? { hint: 'Se actualiza con cada aporte, desde el detalle.' }
+              : {})}
+          />
+
+          <DateField
+            label="Fecha objetivo (Mes/Año)"
+            value={form.values.targetDate ?? defaultTargetDate()}
+            onChange={form.setTargetDate}
+            minimumDate={new Date()}
+            format="month"
+          />
+
+          <View style={{ gap: spacing.xs }}>
+            <Text
+              style={{
+                color: colors.textSecondary,
+                fontSize: typography.fontSizes.sm,
+                fontWeight: typography.fontWeights.medium,
+              }}
+            >
+              Estado
+            </Text>
+            <ToggleRow
+              label={form.values.active ? 'Activa' : 'Pausada'}
+              value={form.values.active}
+              onValueChange={form.setActive}
+            />
+          </View>
+
+          <PhaseSelector value={form.values.phase} onChange={form.setPhase} />
+        </View>
+      </Card>
+
+      <View style={{ gap: spacing.sm }}>
+        <Text
+          style={[
+            styles.previewLabel,
+            {
+              color: colors.textSecondary,
+              fontSize: typography.fontSizes.xs,
+              fontWeight: typography.fontWeights.semibold,
+            },
+          ]}
         >
-          {children}
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+          Vista previa
+        </Text>
+        <GoalCard goal={preview} variant="full" />
+      </View>
+
+      <ErrorNotice error={error} />
+    </ModalScreen>
   )
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
+  previewLabel: {
+    textTransform: 'uppercase',
+    letterSpacing: 0.6,
   },
 })

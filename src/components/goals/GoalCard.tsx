@@ -2,8 +2,19 @@ import React from 'react'
 import { StyleSheet, Text, View } from 'react-native'
 import type { Goal } from '@/api/types'
 import { useTheme } from '@/theme'
-import { formatCurrency, formatCurrencyCompact } from '@/utils'
-import { Badge, Card, ProgressBar } from '@/components/ui'
+import {
+  formatCurrency,
+  formatCurrencyCompact,
+  formatMonthYear,
+  toMonthKey,
+} from '@/utils'
+import {
+  Badge,
+  CalendarIcon,
+  Card,
+  ClockIcon,
+  ProgressBar,
+} from '@/components/ui'
 import { formatMonthsRemaining, getGoalProgress } from './goalProgress'
 
 /** 'compact' is the carousel tile; 'full' is the row on the goals screen. */
@@ -72,25 +83,39 @@ export function GoalCard({
             numberOfLines={full ? 2 : 1}
             style={{
               color: colors.text,
-              fontSize: typography.fontSizes.md,
-              fontWeight: typography.fontWeights.semibold,
+              fontSize: full
+                ? typography.fontSizes.lg
+                : typography.fontSizes.md,
+              fontWeight: typography.fontWeights.bold,
             }}
           >
             {goal.name}
           </Text>
 
-          {full && (
-            <View
-              style={[
-                styles.badges,
-                { gap: spacing.xs, marginTop: spacing.xs },
-              ]}
-            >
-              <Badge label={progress.phaseLabel} tone="neutral" />
-              <Badge label={progress.statusLabel} tone={progress.statusTone} />
+          {full && goal.targetDate ? (
+            <View style={[styles.subtitle, { gap: spacing.xs }]}>
+              <CalendarIcon size={14} color={colors.textSecondary} />
+              <Text
+                numberOfLines={1}
+                style={{
+                  color: colors.textSecondary,
+                  fontSize: typography.fontSizes.xs,
+                }}
+              >
+                {formatMonthYear(toMonthKey(new Date(goal.targetDate)))}
+              </Text>
             </View>
-          )}
+          ) : null}
         </View>
+
+        {full && (
+          <View style={[styles.badges, { gap: spacing.xs }]}>
+            <Badge label={progress.shortPhaseLabel} tone="positive" />
+            {goal.status !== 'active' && (
+              <Badge label={progress.statusLabel} tone={progress.statusTone} />
+            )}
+          </View>
+        )}
       </View>
 
       <View style={[styles.amounts, { marginTop: spacing.md }]}>
@@ -131,17 +156,22 @@ export function GoalCard({
             {`${progress.displayPercent}% completado`}
           </Text>
 
-          <Text
-            numberOfLines={1}
-            style={{
-              color: colors.textSecondary,
-              fontSize: typography.fontSizes.xs,
-            }}
-          >
-            {/* Goals without a target date show what is still missing instead. */}
-            {monthsLabel ??
-              `Faltan ${formatCurrency(progress.remainingAmount)}`}
-          </Text>
+          <View style={[styles.subtitle, { gap: spacing.xs }]}>
+            {monthsLabel ? (
+              <ClockIcon size={14} color={colors.textSecondary} />
+            ) : null}
+            <Text
+              numberOfLines={1}
+              style={{
+                color: colors.textSecondary,
+                fontSize: typography.fontSizes.xs,
+              }}
+            >
+              {/* Goals without a target date show what is still missing. */}
+              {monthsLabel ??
+                `Faltan ${formatCurrency(progress.remainingAmount)}`}
+            </Text>
+          </View>
         </View>
       ) : (
         <Text
@@ -172,6 +202,10 @@ const styles = StyleSheet.create({
   },
   headerBody: {
     flex: 1,
+  },
+  subtitle: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   badges: {
     flexDirection: 'row',

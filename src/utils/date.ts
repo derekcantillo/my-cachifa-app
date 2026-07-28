@@ -84,6 +84,39 @@ export function formatFullDate(date: Date = new Date()): string {
   return capitalize(FULL_DATE_FORMATTER.format(date))
 }
 
+/** Date -> '15 Dic, 2024', the compact form used on the detail screens. */
+export function formatShortDate(date: Date): string {
+  const day = date.getDate()
+  const month = capitalize(
+    MONTH_SHORT_FORMATTER.format(
+      new Date(Date.UTC(date.getFullYear(), date.getMonth(), 1)),
+    ).replace(/\.$/, ''),
+  )
+  return `${day} ${month}, ${date.getFullYear()}`
+}
+
+/** Date -> 'Hoy, 24 de octubre' / 'Ayer, 23 de octubre' / 'Lunes, 21 de julio'. */
+export function formatDayLabel(date: Date, now: Date = new Date()): string {
+  const dayNames = ['Hoy', 'Ayer']
+
+  const startOfDay = (value: Date): number =>
+    new Date(value.getFullYear(), value.getMonth(), value.getDate()).getTime()
+
+  const daysApart = Math.round(
+    (startOfDay(now) - startOfDay(date)) / (24 * 60 * 60 * 1000),
+  )
+
+  const prefix = dayNames[daysApart]
+  if (prefix === undefined) {
+    return formatFullDate(date)
+  }
+
+  const monthName = MONTH_NAME_FORMATTER.format(
+    new Date(Date.UTC(date.getFullYear(), date.getMonth(), 1)),
+  )
+  return `${prefix}, ${date.getDate()} de ${monthName}`
+}
+
 /** ISO date -> '27 jul'. */
 export function formatDayMonth(isoDate: string): string {
   return DAY_LABEL_FORMATTER.format(new Date(isoDate))
