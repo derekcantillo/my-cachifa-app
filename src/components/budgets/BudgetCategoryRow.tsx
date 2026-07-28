@@ -38,6 +38,7 @@ export function BudgetCategoryRow({
       <View style={[styles.header, { gap: spacing.sm }]}>
         <CategoryIcon
           icon={category?.icon ?? 'wallet'}
+          categoryId={category?.id}
           size={20}
           variant="plain"
         />

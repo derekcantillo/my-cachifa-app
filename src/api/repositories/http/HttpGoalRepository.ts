@@ -4,6 +4,7 @@ import type {
   AddGoalContributionInput,
   CreateGoalInput,
   Goal,
+  SavingsProjection,
   UpdateGoalInput,
 } from '../../types/goal'
 import type { GoalRepository } from '../interfaces/GoalRepository'
@@ -46,6 +47,14 @@ class HttpGoalRepository implements GoalRepository {
     const response = await httpClient.post<Goal>(
       `${BASE_PATH}/${input.goalId}/contributions`,
       input,
+    )
+    return response.data
+  }
+
+  async getSavingsProjection(months?: number): Promise<SavingsProjection> {
+    const response = await httpClient.get<SavingsProjection>(
+      `${BASE_PATH}/savings-projection`,
+      { params: months === undefined ? {} : { months } },
     )
     return response.data
   }

@@ -1,13 +1,58 @@
-import { generateId } from '@/utils'
+import { generateId, getCurrentMonthKey, shiftMonthKey } from '@/utils'
 import type {
   AddGoalContributionInput,
   CreateGoalInput,
   Goal,
+  SavingsProjection,
+  SavingsProjectionEvent,
+  SavingsProjectionPoint,
   UpdateGoalInput,
 } from '../../types/goal'
 import type { GoalRepository } from '../interfaces/GoalRepository'
 import { simulateLatency } from './latency'
 import { seedGoals } from './seed-data'
+
+const PROJECTION_MONTHS = 12
+
+/** What the plan sets aside every month once the fixed costs are covered. */
+const MONTHLY_CONTRIBUTION = 300
+
+/**
+ * Extraordinary movements the plan already accounts for, placed relative to the
+ * current month so the projection always has events ahead of today.
+ */
+const PROJECTION_EVENTS: ReadonlyArray<{
+  monthOffset: number
+  event: SavingsProjectionEvent
+}> = [
+  {
+    monthOffset: 2,
+    event: {
+      id: 'evt-venta-carro',
+      label: 'Venta del carro',
+      amount: 2500,
+      kind: 'inflow',
+    },
+  },
+  {
+    monthOffset: 5,
+    event: {
+      id: 'evt-prima',
+      label: 'Prima de mitad de año',
+      amount: 900,
+      kind: 'inflow',
+    },
+  },
+  {
+    monthOffset: 8,
+    event: {
+      id: 'evt-compra-vehiculo',
+      label: 'Compra del vehículo',
+      amount: -5000,
+      kind: 'outflow',
+    },
+  },
+]
 
 let goals: Goal[] = seedGoals.map(goal => ({
   ...goal,
@@ -89,6 +134,45 @@ class MockGoalRepository implements GoalRepository {
 
     goals = goals.map(goal => (goal.id === input.goalId ? updated : goal))
     return { ...updated }
+  }
+
+  async getSavingsProjection(
+    months = PROJECTION_MONTHS,
+  ): Promise<SavingsProjection> {
+    await simulateLatency()
+
+    const startMonth = getCurrentMonthKey()
+    const open = goals.filter(goal => goal.status !== 'completed')
+
+    // The current period opens on what is already saved; every later one adds
+    // the plan's contribution before the events of that month land.
+    let amount = goals.reduce((total, goal) => total + goal.currentAmount, 0)
+
+    const points: SavingsProjectionPoint[] = []
+    for (let offset = 0; offset < months; offset += 1) {
+      const scheduled = PROJECTION_EVENTS.find(
+        entry => entry.monthOffset === offset,
+      )
+
+      if (offset > 0) {
+        amount += MONTHLY_CONTRIBUTION
+      }
+      if (scheduled) {
+        amount += scheduled.event.amount
+      }
+
+      points.push({
+        month: shiftMonthKey(startMonth, offset),
+        amount,
+        ...(scheduled ? { event: { ...scheduled.event } } : {}),
+      })
+    }
+
+    return {
+      points,
+      monthlyContribution: MONTHLY_CONTRIBUTION,
+      targetAmount: open.reduce((total, goal) => total + goal.targetAmount, 0),
+    }
   }
 }
 

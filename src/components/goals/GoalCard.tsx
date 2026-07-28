@@ -1,24 +1,49 @@
 import React from 'react'
 import { StyleSheet, Text, View } from 'react-native'
 import type { Goal } from '@/api/types'
-import { toPercent, useTheme } from '@/theme'
-import { formatCurrencyCompact } from '@/utils'
-import { Card, ProgressBar } from '@/components/ui'
-import { PHASE_GLYPHS } from './phases'
+import { useTheme } from '@/theme'
+import { formatCurrency, formatCurrencyCompact } from '@/utils'
+import { Badge, Card, ProgressBar } from '@/components/ui'
+import { formatMonthsRemaining, getGoalProgress } from './goalProgress'
+
+/** 'compact' is the carousel tile; 'full' is the row on the goals screen. */
+export type GoalCardVariant = 'compact' | 'full'
 
 interface GoalCardProps {
   goal: Goal
+  variant?: GoalCardVariant
   /** Fixed width, used when the card sits in a horizontal carousel. */
   width?: number
   onPress?: (goal: Goal) => void
 }
 
-/** Compact summary of a goal: saved amount, progress bar and completion. */
-export function GoalCard({ goal, width, onPress }: GoalCardProps) {
-  const { colors, spacing, typography } = useTheme()
+const GLYPH_SIZE: Record<GoalCardVariant, number> = { compact: 32, full: 40 }
+const GLYPH_FONT_SIZE: Record<GoalCardVariant, number> = {
+  compact: 16,
+  full: 20,
+}
 
-  const percent = toPercent(goal.currentAmount, goal.targetAmount)
-  const accent = goal.status === 'completed' ? colors.positive : colors.primary
+/**
+ * A goal as a card. Both variants read the same derived figures from
+ * `getGoalProgress`; only the layout around them differs — the compact one
+ * trims to name, amounts and progress, the full one adds the phase and status
+ * badges and the time left.
+ */
+export function GoalCard({
+  goal,
+  variant = 'compact',
+  width,
+  onPress,
+}: GoalCardProps) {
+  const { colors, spacing, typography } = useTheme()
+  const progress = getGoalProgress(goal)
+
+  const full = variant === 'full'
+  const accent = progress.completed ? colors.positive : colors.primary
+  const monthsLabel = formatMonthsRemaining(progress.monthsRemaining)
+  // The full card has the room for exact figures; the carousel tile does not.
+  const formatAmount = full ? formatCurrency : formatCurrencyCompact
+  const glyphSize = GLYPH_SIZE[variant]
 
   return (
     <Card
@@ -26,23 +51,46 @@ export function GoalCard({ goal, width, onPress }: GoalCardProps) {
       onPress={onPress ? () => onPress(goal) : undefined}
     >
       <View style={[styles.header, { gap: spacing.sm }]}>
-        <View style={[styles.glyph, { backgroundColor: colors.surfaceMuted }]}>
-          <Text style={styles.glyphText}>{PHASE_GLYPHS[goal.phase]}</Text>
-        </View>
-
-        <Text
-          numberOfLines={1}
+        <View
           style={[
-            styles.name,
+            styles.glyph,
             {
-              color: colors.text,
-              fontSize: typography.fontSizes.md,
-              fontWeight: typography.fontWeights.semibold,
+              width: glyphSize,
+              height: glyphSize,
+              borderRadius: glyphSize / 2,
+              backgroundColor: colors.surfaceMuted,
             },
           ]}
         >
-          {goal.name}
-        </Text>
+          <Text style={{ fontSize: GLYPH_FONT_SIZE[variant] }}>
+            {progress.glyph}
+          </Text>
+        </View>
+
+        <View style={styles.headerBody}>
+          <Text
+            numberOfLines={full ? 2 : 1}
+            style={{
+              color: colors.text,
+              fontSize: typography.fontSizes.md,
+              fontWeight: typography.fontWeights.semibold,
+            }}
+          >
+            {goal.name}
+          </Text>
+
+          {full && (
+            <View
+              style={[
+                styles.badges,
+                { gap: spacing.xs, marginTop: spacing.xs },
+              ]}
+            >
+              <Badge label={progress.phaseLabel} tone="neutral" />
+              <Badge label={progress.statusLabel} tone={progress.statusTone} />
+            </View>
+          )}
+        </View>
       </View>
 
       <View style={[styles.amounts, { marginTop: spacing.md }]}>
@@ -50,11 +98,11 @@ export function GoalCard({ goal, width, onPress }: GoalCardProps) {
           numberOfLines={1}
           style={{
             color: accent,
-            fontSize: typography.fontSizes.md,
+            fontSize: full ? typography.fontSizes.lg : typography.fontSizes.md,
             fontWeight: typography.fontWeights.semibold,
           }}
         >
-          {formatCurrencyCompact(goal.currentAmount)}
+          {formatAmount(goal.currentAmount)}
         </Text>
         <Text
           numberOfLines={1}
@@ -63,31 +111,55 @@ export function GoalCard({ goal, width, onPress }: GoalCardProps) {
             fontSize: typography.fontSizes.sm,
           }}
         >
-          {`de ${formatCurrencyCompact(goal.targetAmount)}`}
+          {`de ${formatAmount(goal.targetAmount)}`}
         </Text>
       </View>
 
       <View style={{ marginTop: spacing.sm }}>
-        <ProgressBar percent={percent} color={accent} height={10} />
+        <ProgressBar percent={progress.percent} color={accent} height={10} />
       </View>
 
-      <Text
-        style={[
-          styles.percent,
-          {
-            color: colors.textSecondary,
-            fontSize: typography.fontSizes.xs,
-            marginTop: spacing.xs,
-          },
-        ]}
-      >
-        {`${Math.round(percent)}%`}
-      </Text>
+      {full ? (
+        <View style={[styles.footer, { marginTop: spacing.sm }]}>
+          <Text
+            style={{
+              color: colors.text,
+              fontSize: typography.fontSizes.xs,
+              fontWeight: typography.fontWeights.medium,
+            }}
+          >
+            {`${progress.displayPercent}% completado`}
+          </Text>
+
+          <Text
+            numberOfLines={1}
+            style={{
+              color: colors.textSecondary,
+              fontSize: typography.fontSizes.xs,
+            }}
+          >
+            {/* Goals without a target date show what is still missing instead. */}
+            {monthsLabel ??
+              `Faltan ${formatCurrency(progress.remainingAmount)}`}
+          </Text>
+        </View>
+      ) : (
+        <Text
+          style={[
+            styles.compactPercent,
+            {
+              color: colors.textSecondary,
+              fontSize: typography.fontSizes.xs,
+              marginTop: spacing.xs,
+            },
+          ]}
+        >
+          {`${progress.displayPercent}%`}
+        </Text>
+      )}
     </Card>
   )
 }
-
-const GLYPH_SIZE = 32
 
 const styles = StyleSheet.create({
   header: {
@@ -95,24 +167,28 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   glyph: {
-    width: GLYPH_SIZE,
-    height: GLYPH_SIZE,
-    borderRadius: GLYPH_SIZE / 2,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  glyphText: {
-    fontSize: 16,
-  },
-  name: {
+  headerBody: {
     flex: 1,
+  },
+  badges: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
   },
   amounts: {
     flexDirection: 'row',
     alignItems: 'baseline',
     justifyContent: 'space-between',
   },
-  percent: {
+  footer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  compactPercent: {
     textAlign: 'right',
   },
 })

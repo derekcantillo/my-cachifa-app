@@ -28,6 +28,12 @@ const MONTH_NAME_FORMATTER = new Intl.DateTimeFormat(LOCALE, {
   timeZone: 'UTC',
 })
 
+/** Abbreviated month, for chart axes where a full name would not fit. */
+const MONTH_SHORT_FORMATTER = new Intl.DateTimeFormat(LOCALE, {
+  month: 'short',
+  timeZone: 'UTC',
+})
+
 function capitalize(value: string): string {
   return value.charAt(0).toUpperCase() + value.slice(1)
 }
@@ -65,6 +71,12 @@ export function formatMonthYear(month: MonthKey): string {
 /** 'YYYY-MM' -> 'Julio'. */
 export function formatMonthName(month: MonthKey): string {
   return capitalize(MONTH_NAME_FORMATTER.format(parseMonthKey(month)))
+}
+
+/** 'YYYY-MM' -> 'Jul'. The locale's trailing dot is dropped for chart axes. */
+export function formatMonthShort(month: MonthKey): string {
+  const label = MONTH_SHORT_FORMATTER.format(parseMonthKey(month))
+  return capitalize(label.replace(/\.$/, ''))
 }
 
 /** Date -> 'Lunes, 24 de julio'. */

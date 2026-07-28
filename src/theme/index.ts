@@ -12,3 +12,10 @@ export {
   toPercent,
 } from './budgetStatus'
 export type { BudgetStatus } from './budgetStatus'
+export {
+  categoryColors,
+  getCategoryColor,
+  getCategoryColorById,
+  NEUTRAL_CATEGORY_COLOR,
+} from './categoryColors'
+export type { CategoryColorSource } from './categoryColors'

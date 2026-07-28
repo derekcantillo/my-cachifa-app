@@ -1,5 +1,7 @@
 export { DashboardScreen } from './dashboard/DashboardScreen'
 export { ExpensesScreen } from './expenses/ExpensesScreen'
 export { GoalsScreen } from './goals/GoalsScreen'
+export { GoalDetailScreen } from './goals/GoalDetailScreen'
+export { CreateGoalScreen } from './goals/CreateGoalScreen'
 export { ReportsScreen } from './reports/ReportsScreen'
 export { SettingsScreen } from './settings/SettingsScreen'

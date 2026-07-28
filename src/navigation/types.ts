@@ -10,6 +10,9 @@ export type ExpensesStackParamList = {
 
 export type GoalsStackParamList = {
   Goals: undefined
+  // Placeholder routes until sub-block 4c turns them into modals.
+  GoalDetail: { goalId: string }
+  CreateGoal: undefined
 }
 
 export type ReportsStackParamList = {

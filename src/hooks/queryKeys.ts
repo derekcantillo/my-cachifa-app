@@ -9,7 +9,10 @@ export const queryKeys = {
   budgets: (params?: ListBudgetsParams) => ['budgets', params ?? {}] as const,
   categories: (params?: ListCategoriesParams) =>
     ['categories', params ?? {}] as const,
+  // Nested under the goals root so invalidating goals refreshes the projection.
   goals: () => ['goals'] as const,
+  savingsProjection: (months?: number) =>
+    ['goals', 'savings-projection', months ?? null] as const,
   reportsRoot: ['reports'] as const,
   report: (month: string) => ['reports', month] as const,
 }

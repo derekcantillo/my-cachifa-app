@@ -1,6 +1,6 @@
 import React from 'react'
 import { StyleSheet, Text, View } from 'react-native'
-import { useTheme } from '@/theme'
+import { getCategoryColor, useTheme } from '@/theme'
 import { withAlpha } from '@/utils'
 
 /**
@@ -32,7 +32,12 @@ type CategoryIconVariant = 'tinted' | 'muted' | 'plain'
 interface CategoryIconProps {
   /** Icon name as provided by the category, e.g. 'utensils'. */
   icon: string
-  /** Accent color used by the `tinted` variant. */
+  /** Sharpens the color lookup when the caller knows which category this is. */
+  categoryId?: string
+  /**
+   * Overrides the accent used by the `tinted` variant. Left out, the color
+   * comes from the app's fixed category map so icons, chips and charts agree.
+   */
   color?: string
   size?: number
   /**
@@ -44,6 +49,7 @@ interface CategoryIconProps {
 
 export function CategoryIcon({
   icon,
+  categoryId,
   color,
   size = 40,
   variant = 'tinted',
@@ -58,7 +64,7 @@ export function CategoryIcon({
   const background =
     variant === 'muted'
       ? colors.surfaceMuted
-      : withAlpha(color ?? colors.textSecondary, 0.16)
+      : withAlpha(color ?? getCategoryColor({ id: categoryId, icon }), 0.16)
 
   return (
     <View

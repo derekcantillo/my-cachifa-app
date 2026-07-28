@@ -6,8 +6,9 @@ import type { ReportsStackParamList } from '../types'
 const Stack = createNativeStackNavigator<ReportsStackParamList>()
 
 export function ReportsStackNavigator() {
+  // Screens draw their own AppHeader, so the native header stays off.
   return (
-    <Stack.Navigator>
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen
         name="Reports"
         component={ReportsScreen}

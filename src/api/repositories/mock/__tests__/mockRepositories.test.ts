@@ -1,3 +1,4 @@
+import { getCurrentMonthKey, shiftMonthKey } from '@/utils'
 import { mockBudgetRepository } from '../MockBudgetRepository'
 import { mockGoalRepository } from '../MockGoalRepository'
 import { mockReportRepository } from '../MockReportRepository'
@@ -129,6 +130,47 @@ describe('mockGoalRepository', () => {
 
     expect(updated.currentAmount).toBe(before + 50)
     expect(updated.contributions.length).toBe(goal.contributions.length + 1)
+  })
+
+  it('projects accumulated savings month by month, starting today', async () => {
+    const months = 12
+    const projection = await mockGoalRepository.getSavingsProjection(months)
+    const goals = await mockGoalRepository.list()
+
+    expect(projection.points).toHaveLength(months)
+    expect(projection.monthlyContribution).toBeGreaterThan(0)
+    expect(projection.targetAmount).toBeGreaterThan(0)
+
+    const [first] = projection.points
+    if (!first) throw new Error('expected at least one projected point')
+
+    expect(first.month).toBe(getCurrentMonthKey())
+    expect(first.amount).toBe(
+      goals.reduce((total, goal) => total + goal.currentAmount, 0),
+    )
+
+    // Periods run forward without gaps.
+    projection.points.forEach((point, index) => {
+      expect(point.month).toBe(shiftMonthKey(first.month, index))
+    })
+  })
+
+  it('marks the extraordinary movements that bend the projection', async () => {
+    const projection = await mockGoalRepository.getSavingsProjection()
+    const events = projection.points.flatMap(point =>
+      point.event ? [point.event] : [],
+    )
+
+    expect(events.length).toBeGreaterThan(0)
+    expect(events.map(event => event.label)).toEqual(
+      expect.arrayContaining(['Venta del carro', 'Compra del vehículo']),
+    )
+    // Outflows carry a negative amount so the curve dips at that period.
+    expect(
+      events.every(event =>
+        event.kind === 'outflow' ? event.amount < 0 : event.amount > 0,
+      ),
+    ).toBe(true)
   })
 })
 

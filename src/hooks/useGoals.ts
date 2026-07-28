@@ -8,3 +8,11 @@ export function useGoals() {
     queryFn: () => goalRepository.list(),
   })
 }
+
+/** @param months How many periods to project, the current one included. */
+export function useSavingsProjection(months?: number) {
+  return useQuery({
+    queryKey: queryKeys.savingsProjection(months),
+    queryFn: () => goalRepository.getSavingsProjection(months),
+  })
+}

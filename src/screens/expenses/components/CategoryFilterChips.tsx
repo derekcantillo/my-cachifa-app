@@ -2,7 +2,7 @@ import React from 'react'
 import { Pressable, ScrollView, StyleSheet } from 'react-native'
 import type { Category } from '@/api/types'
 import { Badge } from '@/components'
-import { useTheme } from '@/theme'
+import { getCategoryColor, useTheme } from '@/theme'
 
 interface CategoryFilterChipsProps {
   categories: Category[]
@@ -35,7 +35,7 @@ export function CategoryFilterChips({
         <Chip
           key={category.id}
           label={category.name}
-          color={category.color}
+          color={getCategoryColor(category)}
           selected={value === category.id}
           onPress={() => onChange(value === category.id ? null : category.id)}
         />

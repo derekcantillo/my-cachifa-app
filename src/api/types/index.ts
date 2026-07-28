@@ -15,5 +15,9 @@ export type {
   CreateGoalInput,
   UpdateGoalInput,
   AddGoalContributionInput,
+  ProjectionEventKind,
+  SavingsProjection,
+  SavingsProjectionEvent,
+  SavingsProjectionPoint,
 } from './goal'
 export type { MonthlyReport, CategoryExpenseShare } from './report'

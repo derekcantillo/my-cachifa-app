@@ -3,6 +3,7 @@ export { formatCurrency, formatCurrencyCompact } from './currency'
 export {
   formatMonthYear,
   formatMonthName,
+  formatMonthShort,
   formatFullDate,
   formatRelativeTime,
   formatDayMonth,

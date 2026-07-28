@@ -49,7 +49,7 @@ export function TransactionListItem({
     <View style={[styles.row, { paddingVertical: spacing.sm }]}>
       <CategoryIcon
         icon={category?.icon ?? 'wallet'}
-        color={category?.color}
+        categoryId={category?.id}
         variant="muted"
       />
 
