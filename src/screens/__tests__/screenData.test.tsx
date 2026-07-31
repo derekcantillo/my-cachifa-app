@@ -109,9 +109,9 @@ describe('useExpensesData (API_MODE=mock)', () => {
     const data = result.get()
     expect(data.isError).toBe(false)
     expect(data.budgetRows.length).toBeGreaterThan(0)
-    expect(data.budgetRows.every(row => row.category?.kind === 'expense')).toBe(
-      true,
-    )
+    expect(
+      data.budgetRows.every(row => row.category?.kinds.includes('expense')),
+    ).toBe(true)
     expect(data.budgetRows.every(row => row.spent >= 0)).toBe(true)
   })
 
@@ -128,7 +128,9 @@ describe('useExpensesData (API_MODE=mock)', () => {
       data.transactions.every(transaction => transaction.kind === 'expense'),
     ).toBe(true)
     expect(
-      data.filterableCategories.every(category => category.kind === 'expense'),
+      data.filterableCategories.every(category =>
+        category.kinds.includes('expense'),
+      ),
     ).toBe(true)
   })
 
@@ -191,7 +193,7 @@ describe('useReportsData (API_MODE=mock)', () => {
 
     const data = result.get()
     expect(data.isError).toBe(false)
-    expect(data.topExpense?.category?.kind).toBe('expense')
+    expect(data.topExpense?.category?.kinds).toContain('expense')
     expect(data.topExpense?.amount).toBeGreaterThan(0)
     expect(data.mostFrequent?.label).toBeTruthy()
     expect(data.saving.difference).toBe(

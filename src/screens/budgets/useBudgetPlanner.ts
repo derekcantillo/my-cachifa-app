@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react'
-import type { Budget, Category } from '@/api/types'
+import type { Budget, Category, TransactionKind } from '@/api/types'
 import { useBudgets, useCategories } from '@/hooks'
 import type { BudgetLimitInput } from '@/hooks'
 import type { MonthKey } from '@/utils'
@@ -73,9 +73,9 @@ export function useBudgetPlanner(month: MonthKey): BudgetPlan {
   )
 
   const buildRows = useCallback(
-    (kind: Category['kind']): BudgetPlanRow[] =>
+    (kind: TransactionKind): BudgetPlanRow[] =>
       categories
-        .filter(category => category.kind === kind)
+        .filter(category => category.kinds.includes(kind))
         .filter(
           category =>
             budgetsByCategory[category.id] !== undefined ||
@@ -103,7 +103,7 @@ export function useBudgetPlanner(month: MonthKey): BudgetPlan {
     () =>
       categories.filter(
         category =>
-          category.kind === 'expense' &&
+          category.kinds.includes('expense') &&
           budgetsByCategory[category.id] === undefined &&
           !added.includes(category.id),
       ),

@@ -5,7 +5,9 @@ export type GoalStatus = 'active' | 'completed' | 'paused'
 export interface GoalContribution {
   id: string
   amount: number
+  /** ISO 8601. The API calls this `contributedAt`. */
   date: string
+  /** The API sends `null` for a contribution with no note; here it is absent. */
   note?: string
 }
 

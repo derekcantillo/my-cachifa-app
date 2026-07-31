@@ -52,7 +52,9 @@ function sumExpenseBudgets(
 ): number {
   return budgets.reduce((total, budget) => {
     const category = categoriesById[budget.categoryId]
-    return category?.kind === 'expense' ? total + budget.monthlyLimit : total
+    return category?.kinds.includes('expense')
+      ? total + budget.monthlyLimit
+      : total
   }, 0)
 }
 

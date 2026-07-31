@@ -1,4 +1,4 @@
-import { seedCategories } from '@/api/repositories/mock/seed-data'
+import { CATEGORY_CATALOG } from '@/api/mappers/categoryMapper'
 import {
   categoryColors,
   getCategoryColor,
@@ -8,13 +8,13 @@ import {
 
 describe('categoryColors', () => {
   it('covers every category the app ships with', () => {
-    seedCategories.forEach(category => {
+    CATEGORY_CATALOG.forEach(category => {
       expect(categoryColors[category.id]).toBeDefined()
     })
   })
 
   it('resolves a category to the same color by id, by icon and by both', () => {
-    seedCategories.forEach(category => {
+    CATEGORY_CATALOG.forEach(category => {
       const byBoth = getCategoryColor(category)
 
       expect(byBoth).toBe(categoryColors[category.id])

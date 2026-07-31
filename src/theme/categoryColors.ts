@@ -6,7 +6,10 @@
  */
 
 interface CategoryColorEntry {
-  /** Category id as served by the API, when the color belongs to a known one. */
+  /**
+   * Category id, which is the backend's `Category` enum value — see
+   * `src/api/mappers/categoryMapper.ts`.
+   */
   id?: string
   /** Icon the category ships with, so callers that only know the glyph match. */
   icon: string
@@ -14,20 +17,21 @@ interface CategoryColorEntry {
 }
 
 const ENTRIES: readonly CategoryColorEntry[] = [
-  { id: 'cat-alimentacion', icon: 'utensils', color: '#F97316' },
-  { id: 'cat-transporte', icon: 'car', color: '#3B82F6' },
-  { id: 'cat-ocio', icon: 'game-controller', color: '#A855F7' },
-  { id: 'cat-servicios', icon: 'bolt', color: '#EAB308' },
-  { id: 'cat-deuda', icon: 'credit-card', color: '#EF4444' },
-  { id: 'cat-vivienda', icon: 'home', color: '#0EA5E9' },
-  { id: 'cat-mercado', icon: 'shopping-cart', color: '#22C55E' },
-  { id: 'cat-entretenimiento', icon: 'film', color: '#EC4899' },
-  { id: 'cat-salario', icon: 'banknote', color: '#16A34A' },
-  { id: 'cat-ahorro', icon: 'piggy-bank', color: '#2563EB' },
+  { id: 'FOOD', icon: 'utensils', color: '#F97316' },
+  { id: 'TRANSPORT', icon: 'car', color: '#3B82F6' },
+  { id: 'ENTERTAINMENT', icon: 'game-controller', color: '#A855F7' },
+  { id: 'SERVICES', icon: 'bolt', color: '#EAB308' },
+  { id: 'DEBT', icon: 'credit-card', color: '#EF4444' },
+  { id: 'HOUSING', icon: 'home', color: '#0EA5E9' },
+  { id: 'VEHICLE', icon: 'vehicle', color: '#22C55E' },
+  { id: 'HEALTH', icon: 'health', color: '#14B8A6' },
+  { id: 'SAVING', icon: 'piggy-bank', color: '#2563EB' },
+  { id: 'OTHER', icon: 'wallet', color: '#64748B' },
+  { icon: 'shopping-cart', color: '#16A34A' },
+  { icon: 'film', color: '#EC4899' },
+  { icon: 'banknote', color: '#16A34A' },
   { icon: 'gift', color: '#F43F5E' },
-  { icon: 'health', color: '#14B8A6' },
   { icon: 'education', color: '#8B5CF6' },
-  { icon: 'wallet', color: '#64748B' },
 ]
 
 /** Used when a category is unknown and has no key to derive a color from. */

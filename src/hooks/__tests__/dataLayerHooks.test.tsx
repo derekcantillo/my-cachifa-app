@@ -108,7 +108,7 @@ describe('data layer hooks (API_MODE=mock)', () => {
       await createHook.get().mutateAsync({
         kind: 'expense',
         amount: 12,
-        categoryId: 'cat-ocio',
+        categoryId: 'ENTERTAINMENT',
         accountId: 'acc-cash',
         date: new Date().toISOString(),
         description: 'Hook-created expense',

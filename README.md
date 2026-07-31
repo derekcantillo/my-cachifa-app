@@ -26,34 +26,55 @@ pnpm ios        # or: pnpm android
 
 ## Backend URL
 
-`src/config/env.ts` resolves the API base URL at build time:
+Every route lives under `http://<host>:<port>/api/v1`. `src/config/env.ts` resolves the host at
+build time, and only a physical device needs anything in `.env`:
 
-| Target           | URL used                   |
-| ---------------- | -------------------------- |
-| Android emulator | `http://10.0.2.2:3000`     |
-| iOS simulator    | `http://localhost:3000`    |
-| Physical device  | `API_BASE_URL` from `.env` |
+| Target           | Host used   | What to set                                        |
+| ---------------- | ----------- | -------------------------------------------------- |
+| Android emulator | `10.0.2.2`  | nothing — the alias for the host machine           |
+| iOS simulator    | `localhost` | nothing — it shares the Mac's network stack        |
+| Physical device  | `API_HOST`  | `API_HOST=192.168.1.20` (`ipconfig getifaddr en0`) |
 
-`API_BASE_URL` in `.env` overrides the defaults on every platform. Set it to the LAN address of the
-machine running the backend (e.g. `http://192.168.1.20:3000`) when testing on a real device.
+`API_PORT` overrides the port (3000 by default), and `API_BASE_URL` overrides host and port at once
+for a backend that is not on the LAN at all (a tunnel, a staging host) — the `/api/v1` prefix is
+appended for you. `API_TIMEOUT_MS` caps how long a request may hang; lowering it is the quickest way
+to see the timeout state on screen.
 
 `.env` is read at **bundle time** by `react-native-dotenv`, so restart Metro with
 `pnpm start --reset-cache` after changing it. `.env` is gitignored; `.env.example` documents the keys.
 
 ## Data layer
 
-`my-cachifa-backend` isn't deployed yet, so the app talks to a repository interface
-(`src/api/repositories/interfaces`) with two implementations:
+Screens talk to a repository interface (`src/api/repositories/interfaces`) with two
+implementations, picked by `API_MODE` in `.env`:
 
-- `src/api/repositories/mock` — in-memory seed data with simulated latency. Default.
-- `src/api/repositories/http` — axios calls against `env.apiBaseUrl`. Untested against a real
-  backend; exists so switching later is a one-line config change, not a rewrite.
+- `src/api/repositories/mock` — in-memory seed data with simulated latency.
+- `src/api/repositories/http` — axios calls against the real `my-cachifa-backend`.
 
-`API_MODE` in `.env` picks between them (`mock` by default, `http` to call the real API). Screens
-never import a repository directly — they consume it through a hook in `src/hooks`, backed by
-React Query. `src/api/repositoryFactory.ts` is the only file that decides which implementation is
-live; an ESLint rule blocks `src/screens` and `src/components` from importing repositories
-directly.
+Screens never import a repository directly — they consume it through a hook in `src/hooks`, backed
+by React Query. `src/api/repositoryFactory.ts` is the only file that decides which implementation is
+live; an ESLint rule blocks `src/screens` and `src/components` from importing repositories directly.
+
+Two mappers in `src/api/mappers` keep the two modes telling the same story:
+
+- **`categoryMapper`** — categories are the backend's `Category` enum, not a table, so a category id
+  in the app _is_ the enum value (`FOOD`, `ENTERTAINMENT`, …) and the mapper owns the Spanish label,
+  icon, color and which kinds of movement each one accepts. Both repositories serve that one
+  catalog. "Ocio"/"Entretenimiento" and "Alimentación"/"Mercado" are single concepts here.
+- **`decimalMapper`** — amounts are Prisma `Decimal`s. The API converts them to numbers today, but a
+  Decimal that ever reaches `JSON.stringify` untouched arrives as a string, so every amount is read
+  through `toAmount` and can never render as `NaN`.
+
+Failures come out of the HTTP layer as an `ApiError` (`src/api/apiError.ts`) with a message written
+for the person holding the phone — the same `error.message` channel the mocks used, so the screens'
+error states did not change. A dead backend reads as _offline_, a slow one as _timeout_, a rejected
+payload carries the API's own validation message, and a 404 resolves to `null` instead of throwing.
+
+To exercise the whole data path against a running backend without booting a simulator:
+
+```sh
+pnpm test:api   # src/api/integration/liveBackend.itest.ts, cleans up after itself
+```
 
 ## Project structure
 
@@ -92,3 +113,4 @@ wired in three places that must stay in sync: `tsconfig.json` (`paths`), `babel.
 | `pnpm lint`      | ESLint                                |
 | `pnpm format`    | Prettier write                        |
 | `pnpm test`      | Jest                                  |
+| `pnpm test:api`  | Round-trip against a running backend  |

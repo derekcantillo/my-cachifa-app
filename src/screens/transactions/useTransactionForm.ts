@@ -200,7 +200,7 @@ export function useCategoriesForKind(
   kind: TransactionKind,
 ): Category[] {
   return useMemo(
-    () => (categories ?? []).filter(category => category.kind === kind),
+    () => (categories ?? []).filter(category => category.kinds.includes(kind)),
     [categories, kind],
   )
 }

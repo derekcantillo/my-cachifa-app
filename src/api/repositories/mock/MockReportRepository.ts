@@ -1,10 +1,10 @@
+import { CATEGORY_CATALOG } from '../../mappers/categoryMapper'
 import type { CategoryExpenseShare, MonthlyReport } from '../../types/report'
 import type { Transaction, TransactionKind } from '../../types/transaction'
 import type { ReportRepository } from '../interfaces/ReportRepository'
 import { mockBudgetRepository } from './MockBudgetRepository'
 import { mockTransactionRepository } from './MockTransactionRepository'
 import { simulateLatency } from './latency'
-import { seedCategories } from './seed-data'
 
 function sumByKind(transactions: Transaction[], kind: TransactionKind): number {
   return transactions
@@ -56,7 +56,8 @@ class MockReportRepository implements ReportRepository {
     const actualSaving = sumByKind(transactions, 'saving')
 
     const savingCategoryId =
-      seedCategories.find(category => category.kind === 'saving')?.id ?? null
+      CATEGORY_CATALOG.find(category => category.kinds.includes('saving'))
+        ?.id ?? null
     const plannedSaving =
       budgets.find(budget => budget.categoryId === savingCategoryId)
         ?.monthlyLimit ?? 0

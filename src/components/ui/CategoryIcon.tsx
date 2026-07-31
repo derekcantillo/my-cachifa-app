@@ -17,6 +17,7 @@ const GLYPHS: Record<string, string> = {
   home: '🏠',
   'shopping-cart': '🛒',
   film: '🎬',
+  vehicle: '🚙',
   banknote: '💵',
   'piggy-bank': '💰',
   wallet: '👛',

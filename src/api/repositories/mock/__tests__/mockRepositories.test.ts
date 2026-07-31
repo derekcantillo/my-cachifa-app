@@ -1,31 +1,61 @@
+import { CATEGORY_CATALOG } from '@/api/mappers/categoryMapper'
 import { getCurrentMonthKey, shiftMonthKey } from '@/utils'
 import { mockBudgetRepository } from '../MockBudgetRepository'
 import { mockGoalRepository } from '../MockGoalRepository'
 import { mockReportRepository } from '../MockReportRepository'
 import { mockTransactionRepository } from '../MockTransactionRepository'
-import { seedAccounts, seedCategories } from '../seed-data'
+import { seedAccounts, seedBudgets, seedTransactions } from '../seed-data'
 
 describe('seed data', () => {
   it('covers the requested expense categories', () => {
-    const names = seedCategories.map(category => category.name)
+    const names = CATEGORY_CATALOG.map(category => category.name)
     expect(names).toEqual(
       expect.arrayContaining([
         'Alimentación',
         'Transporte',
-        'Ocio',
+        'Ocio y entretenimiento',
         'Servicios',
         'Deuda',
         'Vivienda',
-        'Mercado',
-        'Entretenimiento',
       ]),
     )
+  })
+
+  it('has one category per backend enum value, "Ocio" and "Entretenimiento" included', () => {
+    const ids = CATEGORY_CATALOG.map(category => category.id)
+    expect(new Set(ids).size).toBe(ids.length)
+    expect(ids).toContain('ENTERTAINMENT')
+    expect(catalogNamesMatching(/ocio|entreten/i)).toHaveLength(1)
+  })
+
+  it('seeds only categories the backend knows', () => {
+    const ids = new Set(CATEGORY_CATALOG.map(category => category.id))
+    seedTransactions.forEach(transaction => {
+      expect(ids.has(transaction.categoryId)).toBe(true)
+    })
+    seedBudgets.forEach(budget => {
+      expect(ids.has(budget.categoryId)).toBe(true)
+    })
+  })
+
+  it('keeps at most one budget per category and month', () => {
+    const keys = seedBudgets.map(
+      budget => `${budget.month}:${budget.categoryId}`,
+    )
+    expect(new Set(keys).size).toBe(keys.length)
   })
 
   it('defines at least one account', () => {
     expect(seedAccounts.length).toBeGreaterThan(0)
   })
 })
+
+/** Catalog names matching a pattern, for the uniqueness checks above. */
+function catalogNamesMatching(pattern: RegExp): string[] {
+  return CATEGORY_CATALOG.map(category => category.name).filter(name =>
+    pattern.test(name),
+  )
+}
 
 describe('mockTransactionRepository', () => {
   it('lists seed transactions sorted by most recent date', async () => {
@@ -49,7 +79,7 @@ describe('mockTransactionRepository', () => {
     const created = await mockTransactionRepository.create({
       kind: 'expense',
       amount: 42,
-      categoryId: 'cat-ocio',
+      categoryId: 'ENTERTAINMENT',
       accountId: 'acc-cash',
       date: new Date().toISOString(),
       description: 'Test expense',
@@ -93,7 +123,7 @@ describe('mockBudgetRepository', () => {
 
   it('creates and removes a budget', async () => {
     const created = await mockBudgetRepository.create({
-      categoryId: 'cat-ocio',
+      categoryId: 'ENTERTAINMENT',
       monthlyLimit: 10,
       month: '2099-01',
     })

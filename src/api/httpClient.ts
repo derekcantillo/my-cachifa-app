@@ -1,9 +1,10 @@
-import axios from 'axios'
+import axios, { AxiosError } from 'axios'
 import { env } from '@/config/env'
+import { ApiError, type ApiErrorKind } from './apiError'
 
 export const httpClient = axios.create({
   baseURL: env.apiBaseUrl,
-  timeout: 10000,
+  timeout: env.apiTimeoutMs,
 })
 
 let authToken: string | null = null
@@ -22,3 +23,84 @@ httpClient.interceptors.request.use(config => {
   }
   return config
 })
+
+/** Shape of the body the backend's exception filter sends on every error. */
+interface ApiErrorBody {
+  statusCode?: number
+  message?: string | string[]
+}
+
+/**
+ * The API sends `message` as a string, or as the list of every failed
+ * validation rule. Only the first one is worth showing inline.
+ */
+function readMessage(data: unknown): string | undefined {
+  if (typeof data === 'string') {
+    return data
+  }
+  if (!data || typeof data !== 'object') {
+    return undefined
+  }
+
+  const { message } = data as ApiErrorBody
+  if (Array.isArray(message)) {
+    return message[0]
+  }
+  return message
+}
+
+function kindForStatus(status: number): ApiErrorKind {
+  if (status === 404) return 'notFound'
+  if (status >= 500) return 'server'
+  if (status >= 400) return 'validation'
+  return 'unknown'
+}
+
+function kindForTransport(error: AxiosError): ApiErrorKind {
+  // Axios reports a timeout as ECONNABORTED (or ETIMEDOUT on some engines) and
+  // a dead host / no network as ERR_NETWORK, both without a response.
+  if (error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT') {
+    return 'timeout'
+  }
+  return 'offline'
+}
+
+/**
+ * Turns anything axios rejects with into an `ApiError`. Repositories and
+ * screens only ever see the domain error, so a dead backend, a timeout and a
+ * rejected payload all reach the UI through the same channel the mocks used.
+ */
+function toApiError(error: unknown): ApiError {
+  if (error instanceof ApiError) {
+    return error
+  }
+
+  if (!axios.isAxiosError(error)) {
+    return new ApiError(
+      'unknown',
+      error instanceof Error ? error.message : undefined,
+    )
+  }
+
+  const { response } = error
+  if (!response) {
+    return new ApiError(kindForTransport(error), undefined, {
+      details: error.code,
+    })
+  }
+
+  const kind = kindForStatus(response.status)
+
+  return new ApiError(
+    kind,
+    // A validation message names the field that is wrong, so it is worth
+    // surfacing; a 404 or a stack trace from a 500 is not.
+    kind === 'validation' ? readMessage(response.data) : undefined,
+    { status: response.status, details: response.data },
+  )
+}
+
+httpClient.interceptors.response.use(
+  response => response,
+  (error: unknown) => Promise.reject(toApiError(error)),
+)

@@ -86,7 +86,7 @@ describe('transaction mutations (API_MODE=mock)', () => {
       await result.get().create.mutateAsync({
         kind: 'expense',
         amount: 33,
-        categoryId: 'cat-ocio',
+        categoryId: 'ENTERTAINMENT',
         accountId: 'acc-cash',
         date: new Date().toISOString(),
         description: 'Café de prueba',
@@ -188,15 +188,15 @@ describe('budget mutations (API_MODE=mock)', () => {
     await settle()
     const existing = result
       .get()
-      .budgets.data?.find(budget => budget.categoryId === 'cat-ocio')
-    if (!existing) throw new Error('expected a seed budget for cat-ocio')
+      .budgets.data?.find(budget => budget.categoryId === 'ENTERTAINMENT')
+    if (!existing) throw new Error('expected a seed budget for ENTERTAINMENT')
 
     await act(async () => {
       await result.get().save.mutateAsync({
         month,
         limits: [
           {
-            categoryId: 'cat-ocio',
+            categoryId: 'ENTERTAINMENT',
             monthlyLimit: 175,
             budgetId: existing.id,
           },
@@ -207,7 +207,7 @@ describe('budget mutations (API_MODE=mock)', () => {
 
     const saved = result
       .get()
-      .budgets.data?.find(budget => budget.categoryId === 'cat-ocio')
+      .budgets.data?.find(budget => budget.categoryId === 'ENTERTAINMENT')
     expect(saved?.monthlyLimit).toBe(175)
   })
 
@@ -229,7 +229,7 @@ describe('budget mutations (API_MODE=mock)', () => {
     await act(async () => {
       await result.get().save.mutateAsync({
         month: resetMonth,
-        limits: [{ categoryId: 'cat-mercado', monthlyLimit: 400 }],
+        limits: [{ categoryId: 'HEALTH', monthlyLimit: 400 }],
       })
     })
     await settle()

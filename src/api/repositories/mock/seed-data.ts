@@ -1,8 +1,11 @@
 import type { Account } from '../../types/account'
 import type { Budget } from '../../types/budget'
-import type { Category } from '../../types/category'
 import type { Goal } from '../../types/goal'
 import type { Transaction } from '../../types/transaction'
+
+// Categories are not seeded: they are the backend's `Category` enum, served
+// from `CATEGORY_CATALOG` in `src/api/mappers/categoryMapper.ts` so the mock
+// and the real API label and identify them identically.
 
 /** Seed dates are relative to "now" so the app always has current-month data to show. */
 function daysAgoISO(days: number): string {
@@ -43,95 +46,12 @@ export const seedAccounts: Account[] = [
   },
 ]
 
-export const seedCategories: Category[] = [
-  {
-    id: 'cat-alimentacion',
-    name: 'Alimentación',
-    kind: 'expense',
-    icon: 'utensils',
-    color: '#F97316',
-    description: 'Restaurantes, domicilios',
-  },
-  {
-    id: 'cat-transporte',
-    name: 'Transporte',
-    kind: 'expense',
-    icon: 'car',
-    color: '#3B82F6',
-    description: 'Gasolina, transporte público',
-  },
-  {
-    id: 'cat-ocio',
-    name: 'Ocio',
-    kind: 'expense',
-    icon: 'game-controller',
-    color: '#A855F7',
-    description: 'Salidas, planes',
-  },
-  {
-    id: 'cat-servicios',
-    name: 'Servicios',
-    kind: 'expense',
-    icon: 'bolt',
-    color: '#EAB308',
-    description: 'Internet, celular, luz',
-  },
-  {
-    id: 'cat-deuda',
-    name: 'Deuda',
-    kind: 'expense',
-    icon: 'credit-card',
-    color: '#EF4444',
-    description: 'Cuotas y tarjetas',
-  },
-  {
-    id: 'cat-vivienda',
-    name: 'Vivienda',
-    kind: 'expense',
-    icon: 'home',
-    color: '#0EA5E9',
-    description: 'Arriendo, administración',
-  },
-  {
-    id: 'cat-mercado',
-    name: 'Mercado',
-    kind: 'expense',
-    icon: 'shopping-cart',
-    color: '#22C55E',
-    description: 'Comida, aseo',
-  },
-  {
-    id: 'cat-entretenimiento',
-    name: 'Entretenimiento',
-    kind: 'expense',
-    icon: 'film',
-    color: '#EC4899',
-    description: 'Suscripciones, cine',
-  },
-  {
-    id: 'cat-salario',
-    name: 'Salario',
-    kind: 'income',
-    icon: 'banknote',
-    color: '#16A34A',
-    description: 'Sueldo y quincenas',
-  },
-  {
-    id: 'cat-ahorro',
-    name: 'Ahorro',
-    kind: 'saving',
-    icon: 'piggy-bank',
-    color: '#2563EB',
-    description: 'Lo que apartas cada mes',
-  },
-]
-
 export const seedTransactions: Transaction[] = [
   {
     id: 'txn-1',
     kind: 'income',
     amount: 1800,
-    categoryId: 'cat-salario',
+    categoryId: 'OTHER',
     accountId: 'acc-main',
     date: daysAgoISO(25),
     description: 'Salario mensual',
@@ -143,7 +63,7 @@ export const seedTransactions: Transaction[] = [
     id: 'txn-2',
     kind: 'expense',
     amount: 45.5,
-    categoryId: 'cat-alimentacion',
+    categoryId: 'FOOD',
     accountId: 'acc-cash',
     date: daysAgoISO(20),
     description: 'Almuerzos de la semana',
@@ -155,7 +75,7 @@ export const seedTransactions: Transaction[] = [
     id: 'txn-3',
     kind: 'expense',
     amount: 120,
-    categoryId: 'cat-vivienda',
+    categoryId: 'HOUSING',
     accountId: 'acc-main',
     date: daysAgoISO(18),
     description: 'Cuota de alquiler',
@@ -167,7 +87,7 @@ export const seedTransactions: Transaction[] = [
     id: 'txn-4',
     kind: 'expense',
     amount: 60,
-    categoryId: 'cat-transporte',
+    categoryId: 'TRANSPORT',
     accountId: 'acc-cash',
     date: daysAgoISO(15),
     description: 'Gasolina',
@@ -179,7 +99,7 @@ export const seedTransactions: Transaction[] = [
     id: 'txn-5',
     kind: 'expense',
     amount: 35,
-    categoryId: 'cat-servicios',
+    categoryId: 'SERVICES',
     accountId: 'acc-main',
     date: daysAgoISO(14),
     description: 'Internet y cable',
@@ -191,7 +111,7 @@ export const seedTransactions: Transaction[] = [
     id: 'txn-6',
     kind: 'expense',
     amount: 90,
-    categoryId: 'cat-mercado',
+    categoryId: 'FOOD',
     accountId: 'acc-main',
     date: daysAgoISO(12),
     description: 'Mercado del mes',
@@ -203,7 +123,7 @@ export const seedTransactions: Transaction[] = [
     id: 'txn-7',
     kind: 'expense',
     amount: 25,
-    categoryId: 'cat-ocio',
+    categoryId: 'ENTERTAINMENT',
     accountId: 'acc-cash',
     date: daysAgoISO(10),
     description: 'Cine con amigos',
@@ -215,7 +135,7 @@ export const seedTransactions: Transaction[] = [
     id: 'txn-8',
     kind: 'expense',
     amount: 150,
-    categoryId: 'cat-deuda',
+    categoryId: 'DEBT',
     accountId: 'acc-main',
     date: daysAgoISO(8),
     description: 'Cuota tarjeta de crédito',
@@ -227,7 +147,7 @@ export const seedTransactions: Transaction[] = [
     id: 'txn-9',
     kind: 'expense',
     amount: 15,
-    categoryId: 'cat-entretenimiento',
+    categoryId: 'ENTERTAINMENT',
     accountId: 'acc-cash',
     date: daysAgoISO(5),
     description: 'Suscripción de streaming',
@@ -239,7 +159,7 @@ export const seedTransactions: Transaction[] = [
     id: 'txn-10',
     kind: 'saving',
     amount: 200,
-    categoryId: 'cat-ahorro',
+    categoryId: 'SAVING',
     accountId: 'acc-savings',
     date: daysAgoISO(3),
     description: 'Aporte fondo de emergencia',
@@ -251,7 +171,7 @@ export const seedTransactions: Transaction[] = [
     id: 'txn-11',
     kind: 'expense',
     amount: 30,
-    categoryId: 'cat-alimentacion',
+    categoryId: 'FOOD',
     accountId: 'acc-cash',
     date: daysAgoISO(2),
     description: 'Compra rápida de supermercado',
@@ -263,59 +183,52 @@ export const seedTransactions: Transaction[] = [
 
 const currentBudgetMonth = currentMonth()
 
+/**
+ * One limit per category, the way the backend stores them (unique on
+ * user + month + category). The old "Mercado" and "Entretenimiento" limits are
+ * folded into FOOD and ENTERTAINMENT, which now cover both concepts.
+ */
 export const seedBudgets: Budget[] = [
   {
-    id: 'bud-alimentacion',
-    categoryId: 'cat-alimentacion',
-    monthlyLimit: 250,
+    id: 'bud-food',
+    categoryId: 'FOOD',
+    monthlyLimit: 450,
     month: currentBudgetMonth,
   },
   {
-    id: 'bud-transporte',
-    categoryId: 'cat-transporte',
+    id: 'bud-transport',
+    categoryId: 'TRANSPORT',
     monthlyLimit: 100,
     month: currentBudgetMonth,
   },
   {
-    id: 'bud-ocio',
-    categoryId: 'cat-ocio',
-    monthlyLimit: 80,
+    id: 'bud-entertainment',
+    categoryId: 'ENTERTAINMENT',
+    monthlyLimit: 130,
     month: currentBudgetMonth,
   },
   {
-    id: 'bud-servicios',
-    categoryId: 'cat-servicios',
+    id: 'bud-services',
+    categoryId: 'SERVICES',
     monthlyLimit: 120,
     month: currentBudgetMonth,
   },
   {
-    id: 'bud-deuda',
-    categoryId: 'cat-deuda',
+    id: 'bud-debt',
+    categoryId: 'DEBT',
     monthlyLimit: 200,
     month: currentBudgetMonth,
   },
   {
-    id: 'bud-vivienda',
-    categoryId: 'cat-vivienda',
+    id: 'bud-housing',
+    categoryId: 'HOUSING',
     monthlyLimit: 500,
-    month: currentBudgetMonth,
-  },
-  {
-    id: 'bud-mercado',
-    categoryId: 'cat-mercado',
-    monthlyLimit: 200,
-    month: currentBudgetMonth,
-  },
-  {
-    id: 'bud-entretenimiento',
-    categoryId: 'cat-entretenimiento',
-    monthlyLimit: 50,
     month: currentBudgetMonth,
   },
   // Reuses the Budget shape as a planned-savings target for the report screen.
   {
-    id: 'bud-ahorro',
-    categoryId: 'cat-ahorro',
+    id: 'bud-saving',
+    categoryId: 'SAVING',
     monthlyLimit: 300,
     month: currentBudgetMonth,
   },

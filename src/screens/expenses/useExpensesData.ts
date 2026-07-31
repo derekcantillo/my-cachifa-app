@@ -71,7 +71,7 @@ export function useExpensesData(filters: ExpenseFilters): ExpensesData {
         category: categoriesById[budget.categoryId],
         spent: spentByCategory[budget.categoryId] ?? 0,
       }))
-      .filter(row => row.category?.kind === 'expense')
+      .filter(row => row.category?.kinds.includes('expense'))
       .sort((a, b) => b.spent - a.spent)
   }, [budgetsQuery.data, categoriesById, monthTransactionsQuery.data])
 
@@ -83,7 +83,7 @@ export function useExpensesData(filters: ExpenseFilters): ExpensesData {
   const filterableCategories = useMemo(
     () =>
       (categoriesQuery.data ?? []).filter(category =>
-        kind === 'all' ? true : category.kind === kind,
+        kind === 'all' ? true : category.kinds.includes(kind),
       ),
     [categoriesQuery.data, kind],
   )
