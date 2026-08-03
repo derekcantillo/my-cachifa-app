@@ -12,6 +12,7 @@ import type { Transaction } from '@/api/types'
 import {
   AppHeader,
   Card,
+  EmptyState,
   FAB,
   FilterIcon,
   MonthSelector,
@@ -20,6 +21,7 @@ import {
   Separator,
   Skeleton,
   TransactionListItem,
+  WalletIcon,
   type SegmentedControlOption,
 } from '@/components'
 import { useTheme } from '@/theme'
@@ -48,15 +50,22 @@ export function ExpensesScreen() {
     transactions,
     categoriesById,
     filterableCategories,
+    hasMonthMovements,
     isBudgetsLoading,
     isTransactionsLoading,
-    isError,
+    isBudgetsError,
+    isTransactionsError,
     refetch,
   } = useExpensesData({ month, kind, categoryId })
 
   // A category only belongs to one kind, so narrowing the kind clears it.
   const handleKindChange = useCallback((next: KindFilter) => {
     setKind(next)
+    setCategoryId(null)
+  }, [])
+
+  const clearFilters = useCallback(() => {
+    setKind('all')
     setCategoryId(null)
   }, [])
 
@@ -122,6 +131,7 @@ export function ExpensesScreen() {
         <BudgetsSection
           rows={budgetRows}
           isLoading={isBudgetsLoading}
+          isError={isBudgetsError}
           onManagePress={openBudgetManagement}
         />
 
@@ -166,21 +176,41 @@ export function ExpensesScreen() {
                   </View>
                 ))}
               </View>
-            ) : transactions.length === 0 ? (
+            ) : isTransactionsError ? (
               <Text
                 style={[
                   styles.emptyText,
                   {
-                    color: isError ? colors.negative : colors.textSecondary,
+                    color: colors.negative,
                     fontSize: typography.fontSizes.sm,
                     paddingVertical: spacing.sm,
                   },
                 ]}
               >
-                {isError
-                  ? 'No pudimos cargar tus movimientos. Vuelve a intentarlo.'
-                  : 'No hay movimientos que coincidan con el filtro.'}
+                No pudimos cargar tus movimientos. Desliza hacia abajo para
+                reintentar.
               </Text>
+            ) : transactions.length === 0 ? (
+              // An empty month and a filter that excludes everything both land
+              // here with nothing to list, but only one of them is the user's
+              // doing — and each calls for a different way out.
+              hasMonthMovements ? (
+                <EmptyState
+                  icon={<FilterIcon size={26} color={colors.textSecondary} />}
+                  title="Ningún movimiento coincide"
+                  description="Este mes sí tiene movimientos, pero ninguno pasa el filtro actual."
+                  actionLabel="Quitar filtros"
+                  onAction={clearFilters}
+                />
+              ) : (
+                <EmptyState
+                  icon={<WalletIcon size={26} color={colors.textSecondary} />}
+                  title="Sin movimientos este mes"
+                  description="Registra un gasto, un ingreso o un ahorro y aparecerá en esta lista."
+                  actionLabel="Registrar movimiento"
+                  onAction={handleCreatePress}
+                />
+              )
             ) : (
               transactions.map((transaction, index) => (
                 <View key={transaction.id}>

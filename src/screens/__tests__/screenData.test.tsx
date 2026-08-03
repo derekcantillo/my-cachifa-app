@@ -11,12 +11,15 @@ import {
 import { useGoalsData, PROJECTION_MONTHS } from '../goals/useGoalsData'
 import { useReportsData } from '../reports/useReportsData'
 
+/** How often `settle` checks whether the queries have come to rest. */
+const POLL_MS = 50
+
 /**
- * Longer than the mock repositories' simulated latency ceiling. The monthly
- * report stacks three of them — its own, plus the transaction and budget
- * queries it composes — so the window has to clear all three.
+ * Ceiling for `settle`. The monthly report stacks three simulated latencies —
+ * its own, plus the transaction and budget queries it composes — but the wait
+ * ends as soon as they resolve, so this is only reached when something hangs.
  */
-const RESOLVE_MS = 2600
+const SETTLE_TIMEOUT_MS = 12000
 
 const activeClients: QueryClient[] = []
 
@@ -55,10 +58,30 @@ function renderWithClient<T>(useHook: () => T): { get: () => T } {
   return { get: () => latest }
 }
 
+/**
+ * Waits for every query on screen to come to rest. A fixed sleep long enough
+ * for the mocks' random latency is either flaky or slow, and worse: an
+ * assertion made while a hook is still pending passes on the empty defaults it
+ * returns meanwhile, so a test can go green having checked nothing.
+ */
 async function settle(): Promise<void> {
-  await act(async () => {
-    await new Promise<void>(resolve => setTimeout(resolve, RESOLVE_MS))
-  })
+  const deadline = Date.now() + SETTLE_TIMEOUT_MS
+  let idlePolls = 0
+
+  while (Date.now() < deadline) {
+    await act(async () => {
+      await new Promise<void>(resolve => setTimeout(resolve, POLL_MS))
+    })
+
+    const busy = activeClients.some(client => client.isFetching() > 0)
+    // A resolved query can start a dependent one in the same tick, so idleness
+    // has to hold across two polls before it counts.
+    idlePolls = busy ? 0 : idlePolls + 1
+
+    if (idlePolls >= 2) {
+      return
+    }
+  }
 }
 
 jest.setTimeout(15000)
@@ -144,6 +167,24 @@ describe('useExpensesData (API_MODE=mock)', () => {
     const data = result.get()
     expect(data.transactions).toHaveLength(0)
     expect(data.budgetRows).toHaveLength(0)
+    // Nothing to filter out: the month itself is empty, which is the empty
+    // state that offers to register a movement.
+    expect(data.hasMonthMovements).toBe(false)
+    expect(data.isTransactionsLoading).toBe(false)
+  })
+
+  it('tells an empty month apart from a filter that excludes everything', async () => {
+    // Income never carries a spending category, so the pair matches nothing in
+    // a month that does have movements.
+    const result = renderWithClient(() =>
+      useExpensesData({ ...baseFilters, kind: 'income', categoryId: 'FOOD' }),
+    )
+
+    await settle()
+
+    const data = result.get()
+    expect(data.transactions).toHaveLength(0)
+    expect(data.hasMonthMovements).toBe(true)
   })
 })
 
@@ -179,6 +220,10 @@ describe('useGoalsData (API_MODE=mock)', () => {
 
     expect(data.projection?.points).toHaveLength(PROJECTION_MONTHS)
     expect(data.projection?.points[0]?.month).toBe(getCurrentMonthKey())
+
+    // The projection card only draws a curve once something has been set
+    // aside; the seed goals all carry contributions.
+    expect(data.hasContributions).toBe(true)
   })
 })
 
@@ -193,6 +238,7 @@ describe('useReportsData (API_MODE=mock)', () => {
 
     const data = result.get()
     expect(data.isError).toBe(false)
+    expect(data.hasMovements).toBe(true)
     expect(data.topExpense?.category?.kinds).toContain('expense')
     expect(data.topExpense?.amount).toBeGreaterThan(0)
     expect(data.mostFrequent?.label).toBeTruthy()
@@ -224,5 +270,14 @@ describe('useReportsData (API_MODE=mock)', () => {
     expect(data.distribution).toHaveLength(0)
     expect(data.totalExpense).toBe(0)
     expect(data.topExpense).toBeNull()
+
+    // One empty state stands in for the whole screen instead of four cards
+    // reading "Sin datos" and a donut with nothing in it.
+    expect(data.isLoading).toBe(false)
+    expect(data.hasMovements).toBe(false)
+
+    // Nothing derived from an empty month may come out as NaN.
+    expect(Number.isNaN(data.saving.percentOfPlan)).toBe(false)
+    expect(Number.isNaN(data.saving.difference)).toBe(false)
   })
 })

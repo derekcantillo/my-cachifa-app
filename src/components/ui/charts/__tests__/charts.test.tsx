@@ -2,7 +2,7 @@ import React from 'react'
 import { View } from 'react-native'
 import { act, create, type ReactTestRenderer } from 'react-test-renderer'
 import { ThemeProvider } from '@/theme'
-import { LineChart, PieChart } from '..'
+import { canRenderPieChart, LineChart, PieChart } from '..'
 
 const mounted: ReactTestRenderer[] = []
 
@@ -107,5 +107,52 @@ describe('PieChart', () => {
     expect(
       tree.root.findAllByProps({ children: '$ 270' }).length,
     ).toBeGreaterThan(0)
+  })
+
+  it('draws nothing for a period with no expenses', () => {
+    // A month whose request succeeded but holds no expense arrives as an empty
+    // array; drawing it would leave an arc computed from a total of zero.
+    const tree = render(<PieChart data={[]} centerLabel="$ 0" />)
+    expect(tree.toJSON()).toBeNull()
+  })
+
+  it('draws nothing when every slice sits at zero', () => {
+    const tree = render(
+      <PieChart
+        data={[
+          { key: 'FOOD', label: 'Alimentación', value: 0, color: '#F97316' },
+          { key: 'DEBT', label: 'Deuda', value: 0, color: '#EF4444' },
+        ]}
+      />,
+    )
+    expect(tree.toJSON()).toBeNull()
+  })
+
+  it('keeps a single category, which is a full ring and not a broken one', () => {
+    const tree = render(
+      <PieChart
+        data={[
+          { key: 'FOOD', label: 'Alimentación', value: 450, color: '#F97316' },
+        ]}
+        centerLabel="$ 450"
+      />,
+    )
+    expect(tree.toJSON()).not.toBeNull()
+  })
+})
+
+describe('canRenderPieChart', () => {
+  const slice = (value: number) => ({
+    key: 'FOOD',
+    label: 'Alimentación',
+    value,
+    color: '#F97316',
+  })
+
+  it('agrees with what the chart actually draws', () => {
+    expect(canRenderPieChart([])).toBe(false)
+    expect(canRenderPieChart([slice(0)])).toBe(false)
+    expect(canRenderPieChart([slice(Number.NaN)])).toBe(false)
+    expect(canRenderPieChart([slice(0), slice(120)])).toBe(true)
   })
 })

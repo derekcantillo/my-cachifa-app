@@ -1,6 +1,13 @@
 import React from 'react'
 import { StyleSheet, Text, View } from 'react-native'
-import { Card, PieChart, type PieChartSlice } from '@/components'
+import {
+  canRenderPieChart,
+  Card,
+  EmptyState,
+  PieChart,
+  WalletIcon,
+  type PieChartSlice,
+} from '@/components'
 import { useTheme } from '@/theme'
 import { formatCurrency, formatCurrencyCompact } from '@/utils'
 
@@ -18,17 +25,17 @@ export function ExpenseDistributionCard({
 }: ExpenseDistributionCardProps) {
   const { colors, spacing, typography } = useTheme()
 
-  if (slices.length === 0) {
+  // A month can hold movements and still have nothing to split here — income
+  // or savings only. Asked of the same data the chart would use, so the card
+  // and the donut can never disagree about whether there is a chart to draw.
+  if (!canRenderPieChart(slices)) {
     return (
       <Card title="Distribución de gastos">
-        <Text
-          style={{
-            color: colors.textSecondary,
-            fontSize: typography.fontSizes.sm,
-          }}
-        >
-          No registraste gastos en este mes.
-        </Text>
+        <EmptyState
+          icon={<WalletIcon size={26} color={colors.textSecondary} />}
+          title="Sin gastos este mes"
+          description="Registraste movimientos, pero ninguno es un gasto que repartir por categoría."
+        />
       </Card>
     )
   }

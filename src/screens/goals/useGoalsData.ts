@@ -12,6 +12,12 @@ export interface GoalsData {
   totalSaved: number
   totalTarget: number
   projection: SavingsProjection | undefined
+  /**
+   * Whether any goal has been contributed to. The projection is extrapolated
+   * from that history, so with none there is no curve to draw — only a flat
+   * line the chart would present as a forecast.
+   */
+  hasContributions: boolean
   isLoading: boolean
   isProjectionLoading: boolean
   isError: boolean
@@ -60,6 +66,7 @@ export function useGoalsData(): GoalsData {
     totalSaved: totals.saved,
     totalTarget: totals.target,
     projection: projectionQuery.data,
+    hasContributions: goals.some(goal => goal.contributions.length > 0),
     isLoading: goalsQuery.isPending,
     isProjectionLoading: projectionQuery.isPending,
     isError: goalsQuery.isError || projectionQuery.isError,

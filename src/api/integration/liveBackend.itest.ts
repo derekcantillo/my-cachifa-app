@@ -128,3 +128,36 @@ it('drives every screen path against the running backend', async () => {
   await httpTransactionRepository.remove(created.id)
   expect(await httpTransactionRepository.getById(created.id)).toBeNull()
 })
+
+/**
+ * What every screen gets on a month the user has not touched — the state the
+ * mocks never produced, because their seed data always had something to show.
+ */
+it('returns clean, finite figures for a month with nothing in it', async () => {
+  const emptyMonth = '1999-01'
+
+  const [transactions, budgets, report] = await Promise.all([
+    httpTransactionRepository.list({ month: emptyMonth }),
+    httpBudgetRepository.list({ month: emptyMonth }),
+    httpReportRepository.getMonthlyReport(emptyMonth),
+  ])
+  console.log('reporte de un mes vacío:', report)
+
+  expect(transactions).toHaveLength(0)
+  expect(budgets).toHaveLength(0)
+
+  // Empty, not broken: the screens branch on these, and a NaN would reach the
+  // charts and the percentages.
+  expect(report.expenseDistribution).toHaveLength(0)
+  expect(report.topExpenseCategoryId).toBeNull()
+  expect(report.mostFrequentCategoryId).toBeNull()
+  expect(
+    [
+      report.totalIncome,
+      report.totalExpense,
+      report.totalSaving,
+      report.plannedSaving,
+      report.actualSaving,
+    ].every(isNumber),
+  ).toBe(true)
+})

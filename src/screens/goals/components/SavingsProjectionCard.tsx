@@ -1,13 +1,24 @@
 import React, { useMemo } from 'react'
 import { StyleSheet, Text, View } from 'react-native'
 import type { SavingsProjection } from '@/api/types'
-import { Card, LineChart, Skeleton, type LineChartPoint } from '@/components'
+import {
+  Card,
+  ChartIcon,
+  EmptyState,
+  LineChart,
+  Skeleton,
+  type LineChartPoint,
+} from '@/components'
 import { useTheme } from '@/theme'
 import { formatCurrency, formatMonthShort, withAlpha } from '@/utils'
 
 interface SavingsProjectionCardProps {
   projection: SavingsProjection | undefined
   isLoading: boolean
+  /** Goals on the plan. With none there is nothing to project towards. */
+  goalCount: number
+  /** Whether any of them has been contributed to — see `useGoalsData`. */
+  hasContributions: boolean
 }
 
 /** Labelling every month crowds the axis, so only every third one is drawn. */
@@ -17,6 +28,8 @@ const CHART_HEIGHT = 200
 export function SavingsProjectionCard({
   projection,
   isLoading,
+  goalCount,
+  hasContributions,
 }: SavingsProjectionCardProps) {
   const { colors, spacing, typography } = useTheme()
 
@@ -49,13 +62,29 @@ export function SavingsProjectionCard({
     0,
   )
 
+  // The curve is extrapolated from what has actually been set aside, so
+  // without a single contribution there is no rate to project — the chart
+  // would draw a flat line and pass it off as a forecast.
+  const hasProjection =
+    projection !== undefined && projection.points.length > 0 && hasContributions
+
   return (
     <Card title="Proyección de Ahorro Total">
-      {isLoading || !projection ? (
+      {isLoading ? (
         <View style={{ gap: spacing.sm }}>
           <Skeleton height={14} width="60%" />
           <Skeleton height={CHART_HEIGHT} radius={16} />
         </View>
+      ) : !hasProjection || !projection ? (
+        <EmptyState
+          icon={<ChartIcon size={26} color={colors.textSecondary} />}
+          title="Todavía no hay proyección"
+          description={
+            goalCount === 0
+              ? 'Crea una meta y registra tus aportes para ver cómo crece tu ahorro.'
+              : 'Registra un aporte en alguna de tus metas y aquí verás la proyección.'
+          }
+        />
       ) : (
         <>
           <Text

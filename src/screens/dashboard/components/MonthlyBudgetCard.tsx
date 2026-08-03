@@ -3,9 +3,11 @@ import { Pressable, StyleSheet, Text, View } from 'react-native'
 import {
   Card,
   CheckCircleIcon,
+  EmptyState,
   MoreIcon,
   ProgressRing,
   Separator,
+  SlidersIcon,
 } from '@/components'
 import { getBudgetStatusColor, useTheme } from '@/theme'
 import { daysLeftInMonth, formatCurrency, formatMonthName } from '@/utils'
@@ -17,7 +19,8 @@ interface MonthlyBudgetCardProps {
   spent: number
   remaining: number
   percent: number
-  onOptionsPress?: () => void
+  /** Opens budget management for the period, from the header and the empty state. */
+  onManagePress: () => void
 }
 
 export function MonthlyBudgetCard({
@@ -26,13 +29,17 @@ export function MonthlyBudgetCard({
   spent,
   remaining,
   percent,
-  onOptionsPress,
+  onManagePress,
 }: MonthlyBudgetCardProps) {
   const { colors, spacing, typography } = useTheme()
 
   const statusColor = getBudgetStatusColor(percent, colors)
   const daysLeft = daysLeftInMonth(month)
   const exceeded = remaining < 0
+
+  // With no limits set there is nothing to be 0% of: a ring at zero reads as
+  // "you have spent nothing", when the truth is "you have not planned yet".
+  const isPlanned = limit > 0
 
   return (
     <Card>
@@ -61,7 +68,7 @@ export function MonthlyBudgetCard({
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Opciones del presupuesto"
-          onPress={onOptionsPress}
+          onPress={onManagePress}
           hitSlop={spacing.sm}
           style={({ pressed }) => pressed && styles.pressed}
         >
@@ -69,53 +76,65 @@ export function MonthlyBudgetCard({
         </Pressable>
       </View>
 
-      <View style={[styles.ring, { marginVertical: spacing.lg }]}>
-        <ProgressRing
-          percent={percent}
-          color={statusColor}
-          label={`${Math.round(percent)}%`}
+      {!isPlanned ? (
+        <EmptyState
+          icon={<SlidersIcon size={26} color={colors.textSecondary} />}
+          title="Sin presupuesto este mes"
+          description="Define cuánto quieres gastar por categoría y sigue tu avance aquí."
+          actionLabel="Definir presupuesto"
+          onAction={onManagePress}
         />
-      </View>
+      ) : (
+        <>
+          <View style={[styles.ring, { marginVertical: spacing.lg }]}>
+            <ProgressRing
+              percent={percent}
+              color={statusColor}
+              label={`${Math.round(percent)}%`}
+            />
+          </View>
 
-      <Amount label="Gastados" value={formatCurrency(spent)} />
+          <Amount label="Gastados" value={formatCurrency(spent)} />
 
-      <View style={{ marginVertical: spacing.md }}>
-        <Separator />
-      </View>
+          <View style={{ marginVertical: spacing.md }}>
+            <Separator />
+          </View>
 
-      <Amount label="Presupuesto Total" value={formatCurrency(limit)} />
+          <Amount label="Presupuesto Total" value={formatCurrency(limit)} />
 
-      <View
-        style={[
-          styles.callout,
-          {
-            backgroundColor: exceeded
-              ? colors.surfaceMuted
-              : colors.positiveSurface,
-            marginTop: spacing.md,
-            paddingHorizontal: spacing.sm,
-            paddingVertical: spacing.sm,
-            gap: spacing.xs,
-          },
-        ]}
-      >
-        <CheckCircleIcon
-          size={16}
-          color={exceeded ? colors.negative : colors.positive}
-        />
-        <Text
-          numberOfLines={1}
-          style={{
-            color: exceeded ? colors.negative : colors.positive,
-            fontSize: typography.fontSizes.sm,
-            fontWeight: typography.fontWeights.medium,
-          }}
-        >
-          {exceeded
-            ? `${formatCurrency(Math.abs(remaining))} por encima`
-            : `${formatCurrency(remaining)} disponibles`}
-        </Text>
-      </View>
+          <View
+            style={[
+              styles.callout,
+              {
+                backgroundColor: exceeded
+                  ? colors.surfaceMuted
+                  : colors.positiveSurface,
+                marginTop: spacing.md,
+                paddingHorizontal: spacing.sm,
+                paddingVertical: spacing.sm,
+                gap: spacing.xs,
+              },
+            ]}
+          >
+            <CheckCircleIcon
+              size={16}
+              color={exceeded ? colors.negative : colors.positive}
+            />
+            <Text
+              numberOfLines={1}
+              style={{
+                color: exceeded ? colors.negative : colors.positive,
+                fontSize: typography.fontSizes.sm,
+                fontWeight: typography.fontWeights.medium,
+              }}
+            >
+              {exceeded
+                ? `${formatCurrency(Math.abs(remaining))} por encima`
+                : `${formatCurrency(remaining)} disponibles`}
+            </Text>
+          </View>
+        </>
+      )}
     </Card>
   )
 }

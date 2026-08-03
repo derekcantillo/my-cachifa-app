@@ -3,6 +3,7 @@ import { Text, View } from 'react-native'
 import {
   BudgetCategoryRow,
   Card,
+  EmptyState,
   SectionHeader,
   Skeleton,
   SlidersIcon,
@@ -13,13 +14,21 @@ import type { BudgetRow } from '../useExpensesData'
 interface BudgetsSectionProps {
   rows: BudgetRow[]
   isLoading: boolean
+  /** Set when the budgets could not be loaded at all. */
+  isError?: boolean
   /** Opens the budget management modal for the period on screen. */
-  onManagePress?: () => void
+  onManagePress: () => void
 }
 
+/**
+ * The month's limits. Loading, empty and loaded are three separate states —
+ * a month with no budget is not the same as a month still loading, and neither
+ * is a month whose request failed.
+ */
 export function BudgetsSection({
   rows,
   isLoading,
+  isError = false,
   onManagePress,
 }: BudgetsSectionProps) {
   const { colors, spacing, typography } = useTheme()
@@ -28,7 +37,7 @@ export function BudgetsSection({
     <View style={{ gap: spacing.sm }}>
       <SectionHeader
         title="Presupuestos Activos"
-        actionLabel={onManagePress ? 'Gestionar' : undefined}
+        actionLabel={rows.length > 0 ? 'Gestionar' : undefined}
         onActionPress={onManagePress}
         actionIcon={<SlidersIcon size={16} color={colors.primary} />}
       />
@@ -43,16 +52,27 @@ export function BudgetsSection({
             </View>
           </Card>
         ))
-      ) : rows.length === 0 ? (
+      ) : isError ? (
         <Card>
           <Text
             style={{
-              color: colors.textSecondary,
+              color: colors.negative,
               fontSize: typography.fontSizes.sm,
             }}
           >
-            No hay presupuestos definidos para este mes.
+            No pudimos cargar tus presupuestos. Desliza hacia abajo para
+            reintentar.
           </Text>
+        </Card>
+      ) : rows.length === 0 ? (
+        <Card>
+          <EmptyState
+            icon={<SlidersIcon size={26} color={colors.textSecondary} />}
+            title="Sin presupuestos este mes"
+            description="Asigna un límite por categoría para seguir cuánto te queda."
+            actionLabel="Definir presupuesto"
+            onAction={onManagePress}
+          />
         </Card>
       ) : (
         rows.map(row => (

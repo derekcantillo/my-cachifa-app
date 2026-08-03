@@ -25,6 +25,12 @@ export interface SavingInsight {
 
 export interface ReportsData {
   report: MonthlyReport | undefined
+  /**
+   * Whether the period holds any movement at all. Every insight on the screen
+   * is derived from them, so with none there is nothing to say four times
+   * over — the screen says it once.
+   */
+  hasMovements: boolean
   /** Biggest single expense category of the period. */
   topExpense: CategoryInsight | null
   /** Category with the most movements, whatever their amount. */
@@ -157,6 +163,13 @@ export function useReportsData(month: MonthKey): ReportsData {
 
   return {
     report,
+    hasMovements: Boolean(
+      report &&
+        (report.totalIncome > 0 ||
+          report.totalExpense > 0 ||
+          report.totalSaving > 0 ||
+          report.mostFrequentCategoryId !== null),
+    ),
     topExpense,
     mostFrequent,
     saving,

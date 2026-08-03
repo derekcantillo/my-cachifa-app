@@ -1,11 +1,13 @@
 import React from 'react'
-import { Text, View } from 'react-native'
+import { View } from 'react-native'
 import type { Category, Transaction } from '@/api/types'
 import {
   Card,
+  EmptyState,
   SectionHeader,
   Separator,
   TransactionListItem,
+  WalletIcon,
 } from '@/components'
 import { useTheme } from '@/theme'
 
@@ -14,6 +16,8 @@ interface RecentTransactionsCardProps {
   categoriesById: Record<string, Category>
   onSeeAllPress?: () => void
   onTransactionPress?: (transaction: Transaction) => void
+  /** Opens the register form from the empty state. */
+  onCreatePress: () => void
 }
 
 export function RecentTransactionsCard({
@@ -21,8 +25,9 @@ export function RecentTransactionsCard({
   categoriesById,
   onSeeAllPress,
   onTransactionPress,
+  onCreatePress,
 }: RecentTransactionsCardProps) {
-  const { colors, spacing, typography } = useTheme()
+  const { colors, spacing } = useTheme()
 
   return (
     <View style={{ gap: spacing.sm }}>
@@ -34,14 +39,13 @@ export function RecentTransactionsCard({
 
       <Card>
         {transactions.length === 0 ? (
-          <Text
-            style={{
-              color: colors.textSecondary,
-              fontSize: typography.fontSizes.sm,
-            }}
-          >
-            No hay movimientos registrados este mes.
-          </Text>
+          <EmptyState
+            icon={<WalletIcon size={26} color={colors.textSecondary} />}
+            title="Sin movimientos este mes"
+            description="Registra tu primer gasto o ingreso y aparecerá aquí."
+            actionLabel="Registrar movimiento"
+            onAction={onCreatePress}
+          />
         ) : (
           transactions.map((transaction, index) => (
             <View key={transaction.id}>

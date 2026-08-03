@@ -12,11 +12,18 @@ import {
   AppHeader,
   Card,
   CategoryIcon,
+  ChartIcon,
+  EmptyState,
   MonthSelector,
   Skeleton,
 } from '@/components'
 import { useTheme } from '@/theme'
-import { formatCurrency, getCurrentMonthKey, type MonthKey } from '@/utils'
+import {
+  formatCurrency,
+  formatMonthName,
+  getCurrentMonthKey,
+  type MonthKey,
+} from '@/utils'
 import { ExpenseDistributionCard, InsightCard } from './components'
 import { useReportsData } from './useReportsData'
 
@@ -29,6 +36,7 @@ export function ReportsScreen() {
   const [month, setMonth] = useState<MonthKey>(getCurrentMonthKey)
 
   const {
+    hasMovements,
     topExpense,
     mostFrequent,
     saving,
@@ -43,7 +51,15 @@ export function ReportsScreen() {
     navigation.navigate('Settings')
   }, [navigation])
 
+  const openRegisterTransaction = useCallback(() => {
+    navigation.navigate('RegisterTransaction')
+  }, [navigation])
+
   const savingBeatsPlan = saving.difference >= 0
+
+  // Registering a movement now lands on the current period, so offering it as
+  // the way out of an empty past month would be a dead end.
+  const isCurrentMonth = month === getCurrentMonthKey()
 
   return (
     <SafeAreaView
@@ -100,6 +116,23 @@ export function ReportsScreen() {
               </View>
             </Card>
           ))
+        ) : !hasMovements ? (
+          // Every insight below is derived from the month's movements. With
+          // none, four cards reading "Sin datos" and an empty donut say the
+          // same thing five times — this says it once.
+          <Card>
+            <EmptyState
+              icon={<ChartIcon size={26} color={colors.textSecondary} />}
+              title={`Sin movimientos en ${formatMonthName(month)}`}
+              description="Cuando registres gastos, ingresos o ahorros de este mes verás aquí tus reportes."
+              {...(isCurrentMonth
+                ? {
+                    actionLabel: 'Registrar movimiento',
+                    onAction: openRegisterTransaction,
+                  }
+                : {})}
+            />
+          </Card>
         ) : (
           <>
             <InsightCard

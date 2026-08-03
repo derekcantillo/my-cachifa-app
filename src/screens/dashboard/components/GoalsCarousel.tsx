@@ -1,7 +1,7 @@
 import React from 'react'
-import { FlatList, Text, View } from 'react-native'
+import { FlatList, View } from 'react-native'
 import type { Goal } from '@/api/types'
-import { GoalCard, SectionHeader } from '@/components'
+import { EmptyState, GoalCard, SectionHeader, TargetIcon } from '@/components'
 import { useTheme } from '@/theme'
 
 interface GoalsCarouselProps {
@@ -10,6 +10,8 @@ interface GoalsCarouselProps {
   edgeInset: number
   onSeeAllPress?: () => void
   onGoalPress?: (goal: Goal) => void
+  /** Sends the user to the goals tab from the empty state. */
+  onCreatePress: () => void
 }
 
 const CARD_WIDTH = 240
@@ -19,8 +21,9 @@ export function GoalsCarousel({
   edgeInset,
   onSeeAllPress,
   onGoalPress,
+  onCreatePress,
 }: GoalsCarouselProps) {
-  const { colors, spacing, typography } = useTheme()
+  const { colors, spacing } = useTheme()
 
   return (
     <View style={{ gap: spacing.sm }}>
@@ -33,15 +36,15 @@ export function GoalsCarousel({
       </View>
 
       {goals.length === 0 ? (
-        <Text
-          style={{
-            color: colors.textSecondary,
-            fontSize: typography.fontSizes.sm,
-            paddingHorizontal: edgeInset,
-          }}
-        >
-          Todavía no tienes metas activas.
-        </Text>
+        <View style={{ paddingHorizontal: edgeInset }}>
+          <EmptyState
+            icon={<TargetIcon size={26} color={colors.textSecondary} />}
+            title="Sin metas activas"
+            description="Define a dónde quieres llegar y sigue tu avance mes a mes."
+            actionLabel="Ir a Metas"
+            onAction={onCreatePress}
+          />
+        </View>
       ) : (
         <FlatList
           horizontal

@@ -13,6 +13,8 @@ interface WeeklySummaryCardProps {
   /** Share of the monthly budget already used, 0-100+. */
   percentUsed: number
   daysLeft: number
+  /** False when no limit is set this month, which makes the shares meaningless. */
+  hasBudget: boolean
 }
 
 const HEADLINES = {
@@ -27,16 +29,25 @@ export function WeeklySummaryCard({
   available,
   percentUsed,
   daysLeft,
+  hasBudget,
 }: WeeklySummaryCardProps) {
   const { colors, spacing, typography } = useTheme()
 
+  // Without a limit there is nothing left over to report, so the row is left
+  // out rather than showing what was spent as a negative "available".
   const rows = [
     { label: 'Gastado', value: expense, color: colors.text },
     { label: 'Ahorrado', value: saving, color: colors.positive },
-    { label: 'Disponible', value: available, color: colors.primary },
+    ...(hasBudget
+      ? [{ label: 'Disponible', value: available, color: colors.primary }]
+      : []),
   ]
 
-  const headline = HEADLINES[getBudgetStatus(percentUsed)]
+  const note = hasBudget
+    ? `${HEADLINES[getBudgetStatus(percentUsed)]}, llevas el ${Math.round(
+        percentUsed,
+      )}% del presupuesto con ${daysLeft} días restantes.`
+    : `Quedan ${daysLeft} días del mes. Define un presupuesto para saber si vas bien.`
 
   return (
     <Card title="Resumen semanal 📊">
@@ -81,9 +92,7 @@ export function WeeklySummaryCard({
             fontSize: typography.fontSizes.sm,
           }}
         >
-          {`${headline}, llevas el ${Math.round(
-            percentUsed,
-          )}% del presupuesto con ${daysLeft} días restantes.`}
+          {note}
         </Text>
       </View>
     </Card>

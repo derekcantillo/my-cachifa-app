@@ -12,9 +12,11 @@ import type { Goal } from '@/api/types'
 import {
   AppHeader,
   Card,
+  EmptyState,
   GoalCard,
   SectionHeader,
   Skeleton,
+  TargetIcon,
 } from '@/components'
 import { useTheme } from '@/theme'
 import { formatCurrency } from '@/utils'
@@ -30,11 +32,14 @@ export function GoalsScreen() {
     totalSaved,
     totalTarget,
     projection,
+    hasContributions,
     isLoading,
     isProjectionLoading,
     isError,
     refetch,
   } = useGoalsData()
+
+  const isEmpty = !isLoading && !isError && goals.length === 0
 
   const openSettings = useCallback(() => {
     navigation.navigate('Settings')
@@ -106,18 +111,27 @@ export function GoalsScreen() {
                 </View>
               </Card>
             ))
-          ) : goals.length === 0 ? (
+          ) : isError ? (
             <Card>
               <Text
                 style={{
-                  color: isError ? colors.negative : colors.textSecondary,
+                  color: colors.negative,
                   fontSize: typography.fontSizes.sm,
                 }}
               >
-                {isError
-                  ? 'No pudimos cargar tus metas. Desliza hacia abajo para reintentar.'
-                  : 'Todavía no tienes metas. Crea la primera para empezar tu plan.'}
+                No pudimos cargar tus metas. Desliza hacia abajo para
+                reintentar.
               </Text>
+            </Card>
+          ) : isEmpty ? (
+            <Card>
+              <EmptyState
+                icon={<TargetIcon size={26} color={colors.textSecondary} />}
+                title="Todavía no tienes metas"
+                description="Una meta le pone nombre y fecha a tu ahorro. Crea la primera para empezar tu plan."
+                actionLabel="Crear nueva meta"
+                onAction={openCreateGoal}
+              />
             </Card>
           ) : (
             goals.map(goal => (
@@ -131,11 +145,14 @@ export function GoalsScreen() {
           )}
         </View>
 
-        <CreateGoalButton onPress={openCreateGoal} />
+        {/* The empty state already carries the call to action. */}
+        {!isEmpty && <CreateGoalButton onPress={openCreateGoal} />}
 
         <SavingsProjectionCard
           projection={projection}
           isLoading={isProjectionLoading}
+          goalCount={goals.length}
+          hasContributions={hasContributions}
         />
       </ScrollView>
     </SafeAreaView>

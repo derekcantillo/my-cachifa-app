@@ -77,6 +77,10 @@ export function DashboardScreen() {
     })
   }, [navigation])
 
+  const openBudgetManagement = useCallback(() => {
+    navigation.navigate('BudgetManagement', { month })
+  }, [month, navigation])
+
   return (
     <SafeAreaView
       edges={['top']}
@@ -112,6 +116,7 @@ export function DashboardScreen() {
               spent={monthlyBudget.spent}
               remaining={monthlyBudget.remaining}
               percent={monthlyBudget.percent}
+              onManagePress={openBudgetManagement}
             />
 
             <WeeklySummaryCard
@@ -120,6 +125,7 @@ export function DashboardScreen() {
               available={monthlyBudget.remaining}
               percentUsed={monthlyBudget.percent}
               daysLeft={daysLeftInMonth(month)}
+              hasBudget={monthlyBudget.limit > 0}
             />
 
             <CurrentPlanCard phase={currentPhase} />
@@ -131,6 +137,7 @@ export function DashboardScreen() {
                 edgeInset={spacing.md}
                 onSeeAllPress={openGoals}
                 onGoalPress={openGoal}
+                onCreatePress={openGoals}
               />
             </View>
 
@@ -139,6 +146,7 @@ export function DashboardScreen() {
               categoriesById={categoriesById}
               onSeeAllPress={openExpenses}
               onTransactionPress={openTransaction}
+              onCreatePress={handleCreatePress}
             />
           </>
         )}

@@ -30,6 +30,22 @@ const DEFAULT_RADIUS = 90
 const INNER_RADIUS_RATIO = 0.62
 
 /**
+ * Slices worth drawing. A zero or negative value contributes no arc but still
+ * makes gifted-charts divide by a total it cannot use, so it never reaches the
+ * chart.
+ */
+function toDrawableSlices(
+  data: readonly PieChartSlice[],
+): readonly PieChartSlice[] {
+  return data.filter(slice => Number.isFinite(slice.value) && slice.value > 0)
+}
+
+/** True when there is enough in `data` for a donut to mean anything. */
+export function canRenderPieChart(data: readonly PieChartSlice[]): boolean {
+  return toDrawableSlices(data).length > 0
+}
+
+/**
  * The app's pie/donut chart: gifted-charts with the theme's surface, type scale
  * and spacing applied. Slice colors come from the caller — reports pass the
  * fixed category colors so the donut matches the icons and chips.
@@ -45,7 +61,7 @@ export function PieChart({
 
   const chartData = useMemo<pieDataItem[]>(
     () =>
-      data.map(slice => ({
+      toDrawableSlices(data).map(slice => ({
         value: slice.value,
         color: slice.color,
         text: slice.label,
@@ -84,6 +100,14 @@ export function PieChart({
 
   const showCenter =
     donut && (centerLabel !== undefined || centerCaption !== undefined)
+
+  // A period with no expenses reaches here as an empty array — or as slices
+  // that all sit at zero, which is the same thing to a donut. Drawing either
+  // one leaves an arc computed from a total of 0. The caller owns the message
+  // that goes in its place (`canRenderPieChart` asks the same question).
+  if (chartData.length === 0) {
+    return null
+  }
 
   return (
     <GiftedPieChart

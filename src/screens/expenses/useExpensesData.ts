@@ -35,8 +35,16 @@ export interface ExpensesData {
   categoriesById: Record<string, Category>
   /** Categories offered by the chip filter, narrowed to the selected kind. */
   filterableCategories: Category[]
+  /**
+   * Whether the period holds any movement at all, ignoring the filters. Tells
+   * "nothing registered this month" apart from "the filter excludes it all",
+   * which read the same in `transactions` but call for different copy.
+   */
+  hasMonthMovements: boolean
   isBudgetsLoading: boolean
   isTransactionsLoading: boolean
+  isBudgetsError: boolean
+  isTransactionsError: boolean
   isError: boolean
   refetch: () => void
 }
@@ -88,22 +96,28 @@ export function useExpensesData(filters: ExpenseFilters): ExpensesData {
     [categoriesQuery.data, kind],
   )
 
+  const isBudgetsError =
+    budgetsQuery.isError ||
+    categoriesQuery.isError ||
+    monthTransactionsQuery.isError
+  const isTransactionsError =
+    filteredTransactionsQuery.isError || categoriesQuery.isError
+
   return {
     budgetRows,
     transactions,
     categoriesById,
     filterableCategories,
+    hasMonthMovements: (monthTransactionsQuery.data ?? []).length > 0,
     isBudgetsLoading:
       budgetsQuery.isPending ||
       categoriesQuery.isPending ||
       monthTransactionsQuery.isPending,
     isTransactionsLoading:
       filteredTransactionsQuery.isPending || categoriesQuery.isPending,
-    isError:
-      budgetsQuery.isError ||
-      categoriesQuery.isError ||
-      monthTransactionsQuery.isError ||
-      filteredTransactionsQuery.isError,
+    isBudgetsError,
+    isTransactionsError,
+    isError: isBudgetsError || isTransactionsError,
     refetch: () => {
       budgetsQuery.refetch()
       categoriesQuery.refetch()

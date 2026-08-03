@@ -40,8 +40,13 @@ for a backend that is not on the LAN at all (a tunnel, a staging host) — the `
 appended for you. `API_TIMEOUT_MS` caps how long a request may hang; lowering it is the quickest way
 to see the timeout state on screen.
 
-`.env` is read at **bundle time** by `react-native-dotenv`, so restart Metro with
-`pnpm start --reset-cache` after changing it. `.env` is gitignored; `.env.example` documents the keys.
+`.env` is read at **bundle time** by `react-native-dotenv`, and Metro does not invalidate its
+transform cache when the file changes — so after editing `.env` you must restart Metro with
+`pnpm start --reset-cache` **and** reload the app. Otherwise the old values stay baked into the
+bundle. In dev the app logs `[api] mode=… baseURL=…` on startup so you can see which ones shipped.
+
+`.env` is gitignored; `.env.example` documents the keys. Jest reads `.env.test` instead (committed,
+`API_MODE=mock`), so the suite never depends on the `.env` a developer happens to have locally.
 
 ## Data layer
 
