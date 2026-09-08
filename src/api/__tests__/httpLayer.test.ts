@@ -4,7 +4,7 @@ import {
   type InternalAxiosRequestConfig,
 } from 'axios'
 import { ApiError } from '../apiError'
-import { httpClient } from '../httpClient'
+import { httpClient, setApiKeyCache } from '../httpClient'
 import {
   CATEGORY_CATALOG,
   getCategoryLabel,
@@ -91,6 +91,9 @@ beforeEach(() => {
   requests.length = 0
   routes = {}
   transportFailure = null
+  // These tests exercise the HTTP layer's error mapping, not Keychain, so
+  // a fake key skips the "not configured" path the interceptor short-circuits on.
+  setApiKeyCache('test-api-key')
 })
 
 describe('categoryMapper', () => {

@@ -1,6 +1,7 @@
 import axios, { AxiosError } from 'axios'
 import { env } from '@/config/env'
 import { ApiError, type ApiErrorKind } from './apiError'
+import { getApiKey } from './secureStorage'
 
 export const httpClient = axios.create({
   baseURL: env.apiBaseUrl,
@@ -17,10 +18,47 @@ export function setAuthToken(token: string | null): void {
   authToken = token
 }
 
-httpClient.interceptors.request.use(config => {
+/**
+ * The key rarely changes, so the first successful Keychain read is kept here
+ * instead of hitting Keychain on every request. `setApiKeyCache` lets the
+ * setup screen and "Cambiar API Key" push a fresh value (or `null`) in
+ * without waiting for an app restart.
+ */
+let cachedApiKey: string | null = null
+
+export function setApiKeyCache(key: string | null): void {
+  cachedApiKey = key
+}
+
+async function resolveApiKey(): Promise<string | null> {
+  if (cachedApiKey) {
+    return cachedApiKey
+  }
+  const key = await getApiKey()
+  cachedApiKey = key
+  return key
+}
+
+/** The backend only exempts `/health` from the `X-API-Key` requirement. */
+function requiresApiKey(url: string | undefined): boolean {
+  return !url?.replace(/\/+$/, '').endsWith('/health')
+}
+
+httpClient.interceptors.request.use(async config => {
   if (authToken) {
     config.headers.set('Authorization', `Bearer ${authToken}`)
   }
+
+  if (requiresApiKey(config.url)) {
+    const apiKey = await resolveApiKey()
+    if (!apiKey) {
+      return Promise.reject(
+        new ApiError('apiKeyMissing', 'API key no configurada'),
+      )
+    }
+    config.headers.set('X-API-Key', apiKey)
+  }
+
   return config
 })
 

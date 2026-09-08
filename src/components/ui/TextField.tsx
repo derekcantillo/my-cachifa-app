@@ -25,6 +25,8 @@ interface TextFieldProps {
   multiline?: boolean
   editable?: boolean
   tone?: FieldTone
+  secureTextEntry?: boolean
+  autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters'
 }
 
 export function TextField({
@@ -39,6 +41,8 @@ export function TextField({
   multiline = false,
   editable = true,
   tone = 'outlined',
+  secureTextEntry = false,
+  autoCapitalize,
 }: TextFieldProps) {
   const { colors, spacing, typography } = useTheme()
 
@@ -64,6 +68,8 @@ export function TextField({
         autoFocus={autoFocus}
         multiline={multiline}
         editable={editable}
+        secureTextEntry={secureTextEntry}
+        autoCapitalize={autoCapitalize}
         style={[
           styles.input,
           multiline && styles.multiline,

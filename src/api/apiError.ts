@@ -15,6 +15,8 @@ export type ApiErrorKind =
   | 'validation'
   /** 5xx — the backend broke. */
   | 'server'
+  /** No API key in Keychain yet — the request never left the device. */
+  | 'apiKeyMissing'
   | 'unknown'
 
 const MESSAGES: Record<ApiErrorKind, string> = {
@@ -24,6 +26,7 @@ const MESSAGES: Record<ApiErrorKind, string> = {
   notFound: 'No encontramos lo que buscabas.',
   validation: 'Revisa los datos e inténtalo de nuevo.',
   server: 'El servidor tuvo un problema. Inténtalo más tarde.',
+  apiKeyMissing: 'API key no configurada.',
   unknown: 'Algo salió mal. Vuelve a intentarlo.',
 }
 
@@ -61,6 +64,11 @@ export function isApiError(error: unknown): error is ApiError {
 /** True for the 404 a repository turns into `null` instead of rethrowing. */
 export function isNotFoundError(error: unknown): boolean {
   return isApiError(error) && error.kind === 'notFound'
+}
+
+/** True when a request was rejected locally because Keychain has no API key. */
+export function isApiKeyMissingError(error: unknown): boolean {
+  return isApiError(error) && error.kind === 'apiKeyMissing'
 }
 
 /** Default copy for a kind, for callers that want it without an instance. */
