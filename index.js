@@ -2,6 +2,10 @@
  * @format
  */
 
+if (__DEV__) {
+  require('./src/config/reactotron')
+}
+
 // Must be the first import in the app: patches globals gesture-handler needs.
 import 'react-native-gesture-handler'
 

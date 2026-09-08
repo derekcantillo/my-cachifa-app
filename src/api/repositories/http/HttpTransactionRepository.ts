@@ -30,8 +30,10 @@ interface TransactionDto {
   description: string | null
   tags: string[]
   accountId: string | null
+  recurringExpenseId: string | null
   transactionDate: string
   monthYear: string
+  budgetPeriod: string | null
   createdAt: string
   updatedAt: string
 }
@@ -42,8 +44,10 @@ interface TransactionPayload {
   category?: BackendCategory
   description?: string
   accountId?: string
+  recurringExpenseId?: string
   tags?: string[]
   transactionDate?: string
+  budgetPeriod?: string
 }
 
 /**
@@ -74,6 +78,10 @@ function toTransaction(dto: TransactionDto): Transaction {
     date: dto.transactionDate,
     description: dto.description ?? '',
     tags: dto.tags ?? [],
+    ...(dto.recurringExpenseId
+      ? { recurringExpenseId: dto.recurringExpenseId }
+      : {}),
+    ...(dto.budgetPeriod ? { budgetPeriod: dto.budgetPeriod } : {}),
     createdAt: dto.createdAt,
     updatedAt: dto.updatedAt,
   }
@@ -91,8 +99,16 @@ function toPayload(input: UpdateTransactionInput): TransactionPayload {
       ? { description: input.description }
       : {}),
     ...(input.accountId ? { accountId: input.accountId } : {}),
+    ...(input.recurringExpenseId
+      ? { recurringExpenseId: input.recurringExpenseId }
+      : {}),
     ...(input.tags !== undefined ? { tags: input.tags } : {}),
     ...(input.date !== undefined ? { transactionDate: input.date } : {}),
+    // Only sent when the form actually shows the field (INCOME + SALARY);
+    // every other combination lets the backend derive it from the date.
+    ...(input.budgetPeriod !== undefined
+      ? { budgetPeriod: input.budgetPeriod }
+      : {}),
   }
 }
 

@@ -20,4 +20,19 @@ export const queryKeys = {
     ['goals', 'savings-projection', months ?? null] as const,
   reportsRoot: ['reports'] as const,
   report: (month: string) => ['reports', month] as const,
+  recurringExpensesRoot: ['recurring-expenses'] as const,
+  recurringExpenses: () => ['recurring-expenses'] as const,
+  // Nested under the root so a write to any recurring expense refreshes it too.
+  pendingRecurringExpenses: (month: string) =>
+    ['recurring-expenses', 'pending', month] as const,
+  settings: () => ['settings'] as const,
+  alertsRoot: ['alerts'] as const,
+  alerts: (unreadOnly?: boolean) =>
+    ['alerts', { unreadOnly: unreadOnly ?? false }] as const,
+  // Nested under the root so marking one or all as read refreshes it too.
+  unreadAlertsCount: () => ['alerts', 'unread-count'] as const,
+  loansRoot: ['loans'] as const,
+  loans: () => ['loans'] as const,
+  // Nested under the root so a write to any loan refreshes the detail too.
+  loan: (id: string) => ['loans', 'detail', id] as const,
 }

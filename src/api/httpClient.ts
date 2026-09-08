@@ -1,7 +1,8 @@
 import axios, { AxiosError } from 'axios'
 import { env } from '@/config/env'
+import { setHasApiKey } from './apiKeyGate'
 import { ApiError, type ApiErrorKind } from './apiError'
-import { getApiKey } from './secureStorage'
+import { clearApiKey, getApiKey } from './secureStorage'
 
 export const httpClient = axios.create({
   baseURL: env.apiBaseUrl,
@@ -88,6 +89,7 @@ function readMessage(data: unknown): string | undefined {
 }
 
 function kindForStatus(status: number): ApiErrorKind {
+  if (status === 401) return 'unauthorized'
   if (status === 404) return 'notFound'
   if (status >= 500) return 'server'
   if (status >= 400) return 'validation'
@@ -138,7 +140,28 @@ function toApiError(error: unknown): ApiError {
   )
 }
 
+/**
+ * A 401 means the key Keychain has is missing or was revoked — no retry or
+ * screen-level message fixes that. Wiping it here, once, sends every screen
+ * back to `ApiKeySetupScreen` via the same gate `App.tsx` checks at startup,
+ * instead of each of the five screens needing its own recovery affordance.
+ */
+async function handleUnauthorized(): Promise<void> {
+  cachedApiKey = null
+  await clearApiKey()
+  setHasApiKey(false)
+}
+
 httpClient.interceptors.response.use(
   response => response,
-  (error: unknown) => Promise.reject(toApiError(error)),
+  async (error: unknown) => {
+    const apiError = toApiError(error)
+    if (apiError.kind === 'unauthorized') {
+      // Awaited so the gate has already flipped by the time the caller's
+      // `catch` runs — screens re-render into `ApiKeySetupScreen` before,
+      // not after, they'd otherwise flash their own error state.
+      await handleUnauthorized()
+    }
+    return Promise.reject(apiError)
+  },
 )

@@ -4,7 +4,9 @@ import {
   type InternalAxiosRequestConfig,
 } from 'axios'
 import { ApiError } from '../apiError'
+import { getHasApiKey, setHasApiKey } from '../apiKeyGate'
 import { httpClient, setApiKeyCache } from '../httpClient'
+import { hasApiKey, setApiKey } from '../secureStorage'
 import {
   CATEGORY_CATALOG,
   getCategoryLabel,
@@ -185,6 +187,25 @@ describe('network error handling', () => {
     expect((error as ApiError).kind).toBe('validation')
     expect((error as ApiError).message).toBe('amount must be a positive number')
     expect((error as ApiError).status).toBe(400)
+  })
+
+  it('treats a 401 as an auth problem, not a generic 4xx, and re-arms the setup gate', async () => {
+    // A key is stored and the gate is open, the way the app looks once
+    // `ApiKeySetupScreen` has already run once.
+    await setApiKey('a-key-the-backend-no-longer-accepts')
+    setApiKeyCache('a-key-the-backend-no-longer-accepts')
+    setHasApiKey(true)
+    route('GET /transactions', { status: 401 })
+
+    const error = await httpTransactionRepository.list().catch(caught => caught)
+
+    expect((error as ApiError).kind).toBe('unauthorized')
+    expect((error as ApiError).message).toMatch(/autenticación/i)
+    // The stale key is gone from Keychain and the in-memory cache, and the
+    // gate is closed again — the next request has nothing to send and the
+    // next render shows `ApiKeySetupScreen` instead of an empty list.
+    await expect(hasApiKey()).resolves.toBe(false)
+    expect(getHasApiKey()).toBe(false)
   })
 
   it('hides a server stack trace behind a message the user can act on', async () => {

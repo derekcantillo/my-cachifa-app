@@ -21,6 +21,9 @@ export const BACKEND_CATEGORIES = [
   'VEHICLE',
   'HEALTH',
   'SAVING',
+  'SALARY',
+  'CONTINGENCY',
+  'LOAN',
   'OTHER',
 ] as const
 
@@ -98,7 +101,27 @@ const DEFINITIONS: Record<BackendCategory, CategoryDefinition> = {
     icon: 'piggy-bank',
     description: 'Lo que apartas cada mes',
   },
-  // The backend has no income-specific value, so OTHER carries income too.
+  SALARY: {
+    label: 'Salario',
+    kinds: ['income'],
+    icon: 'salary',
+    description: 'Sueldo mensual',
+  },
+  CONTINGENCY: {
+    label: 'Imprevistos',
+    kinds: ['expense'],
+    icon: 'contingency',
+    description: 'Gastos inesperados',
+  },
+  // Loans never go through the movement form — they're created and repaid
+  // from the Loans screens directly — so no `kind` claims this category.
+  LOAN: {
+    label: 'Préstamo',
+    kinds: [],
+    icon: 'loan',
+    description: 'Dinero prestado a terceros',
+  },
+  // The backend has no other income-specific value, so OTHER carries income too.
   OTHER: {
     label: 'Otros',
     kinds: ['expense', 'income'],
@@ -122,7 +145,7 @@ const LEGACY_IDS: Record<string, BackendCategory> = {
   'cat-deuda': 'DEBT',
   'cat-vivienda': 'HOUSING',
   'cat-ahorro': 'SAVING',
-  'cat-salario': 'OTHER',
+  'cat-salario': 'SALARY',
 }
 
 const BY_VALUE = new Set<string>(BACKEND_CATEGORIES)

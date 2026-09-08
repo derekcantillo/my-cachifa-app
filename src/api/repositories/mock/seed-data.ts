@@ -1,6 +1,9 @@
 import type { Account } from '../../types/account'
+import type { Alert } from '../../types/alert'
 import type { Budget } from '../../types/budget'
 import type { Goal } from '../../types/goal'
+import type { Loan } from '../../types/loan'
+import type { RecurringExpense } from '../../types/recurringExpense'
 import type { Transaction } from '../../types/transaction'
 
 // Categories are not seeded: they are the backend's `Category` enum, served
@@ -282,5 +285,115 @@ export const seedGoals: Goal[] = [
     targetDate: daysFromNowISO(90),
     contributions: [{ id: 'contrib-5', amount: 300, date: daysAgoISO(20) }],
     createdAt: daysAgoISO(40),
+  },
+]
+
+export const seedRecurringExpenses: RecurringExpense[] = [
+  {
+    id: 'rec-arriendo',
+    name: 'Arriendo',
+    categoryId: 'HOUSING',
+    estimatedAmount: 1200,
+    isAmountFixed: true,
+    dayOfMonth: 5,
+    active: true,
+  },
+  {
+    id: 'rec-servicios',
+    name: 'Servicios públicos',
+    categoryId: 'SERVICES',
+    estimatedAmount: 90,
+    isAmountFixed: false,
+    dayOfMonth: 15,
+    active: true,
+  },
+  {
+    id: 'rec-gimnasio',
+    name: 'Gimnasio',
+    categoryId: 'HEALTH',
+    estimatedAmount: 40,
+    isAmountFixed: true,
+    dayOfMonth: 1,
+    active: false,
+  },
+]
+
+// The `[dedupeKey]` prefix mirrors the real backend's `AlertsService.createOnce`
+// so the mock exercises the same recurring-expense-id parsing the http mode does.
+export const seedAlerts: Alert[] = [
+  {
+    id: 'alert-arriendo-due',
+    type: 'RECURRING_EXPENSE_DUE',
+    message: `[${currentMonth()}:rec-arriendo] Arriendo: pago estimado de $ 1.200.000 vence el día 5 y todavía no lo registras.`,
+    isRead: false,
+    createdAt: daysAgoISO(1),
+  },
+  {
+    id: 'alert-savings-risk',
+    type: 'SAVINGS_TARGET_AT_RISK',
+    message: `[${currentMonth()}] Tus metas activas requieren un aporte de $ 850.000/mes, pero tu ahorro recomendado (30% del disponible) es de $ 600.000. Revisa tus metas o tu meta de ahorro.`,
+    isRead: false,
+    createdAt: daysAgoISO(2),
+  },
+  {
+    id: 'alert-budget-90',
+    type: 'BUDGET_90',
+    message: 'Ya usaste el 90% de tu presupuesto en Alimentación este mes.',
+    isRead: false,
+    createdAt: daysAgoISO(3),
+  },
+  {
+    id: 'alert-budget-100',
+    type: 'BUDGET_100',
+    message: 'Superaste el presupuesto de Entretenimiento este mes.',
+    isRead: true,
+    createdAt: daysAgoISO(6),
+  },
+  {
+    id: 'alert-goal-progress',
+    type: 'GOAL_PROGRESS',
+    message: 'Vas al día con el Fondo de emergencia — sigue así.',
+    isRead: true,
+    createdAt: daysAgoISO(10),
+  },
+]
+
+export const seedLoans: Loan[] = [
+  {
+    id: 'loan-camila',
+    borrowerName: 'Camila',
+    amount: 300,
+    amountRepaid: 100,
+    remainingAmount: 200,
+    status: 'partially_paid',
+    loanDate: daysAgoISO(20),
+    dueDate: daysFromNowISO(40),
+    note: 'Para la matrícula del curso',
+    accountId: 'acc-main',
+    repayments: [
+      {
+        id: 'loan-camila-repay-1',
+        amount: 100,
+        paidAt: daysAgoISO(5),
+        note: 'Primer abono',
+      },
+    ],
+  },
+  {
+    id: 'loan-andres',
+    borrowerName: 'Andrés',
+    amount: 80,
+    amountRepaid: 80,
+    remainingAmount: 0,
+    status: 'paid',
+    loanDate: daysAgoISO(60),
+    accountId: 'acc-cash',
+    repayments: [
+      {
+        id: 'loan-andres-repay-1',
+        amount: 80,
+        paidAt: daysAgoISO(30),
+      },
+    ],
   },
 ]

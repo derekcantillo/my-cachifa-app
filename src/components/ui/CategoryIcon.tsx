@@ -24,6 +24,9 @@ const GLYPHS: Record<string, string> = {
   gift: '🎁',
   health: '🩺',
   education: '🎓',
+  salary: '💼',
+  contingency: '🛟',
+  loan: '🤝',
 }
 
 const FALLBACK_GLYPH = '💠'

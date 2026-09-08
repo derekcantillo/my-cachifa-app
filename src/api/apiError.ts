@@ -17,6 +17,8 @@ export type ApiErrorKind =
   | 'server'
   /** No API key in Keychain yet — the request never left the device. */
   | 'apiKeyMissing'
+  /** 401 from the backend — the key it has is missing or wrong, not the payload. */
+  | 'unauthorized'
   | 'unknown'
 
 const MESSAGES: Record<ApiErrorKind, string> = {
@@ -27,6 +29,7 @@ const MESSAGES: Record<ApiErrorKind, string> = {
   validation: 'Revisa los datos e inténtalo de nuevo.',
   server: 'El servidor tuvo un problema. Inténtalo más tarde.',
   apiKeyMissing: 'API key no configurada.',
+  unauthorized: 'Problema de autenticación. Verifica tu API Key.',
   unknown: 'Algo salió mal. Vuelve a intentarlo.',
 }
 
@@ -69,6 +72,11 @@ export function isNotFoundError(error: unknown): boolean {
 /** True when a request was rejected locally because Keychain has no API key. */
 export function isApiKeyMissingError(error: unknown): boolean {
   return isApiError(error) && error.kind === 'apiKeyMissing'
+}
+
+/** True when the backend itself rejected the request with 401. */
+export function isUnauthorizedError(error: unknown): boolean {
+  return isApiError(error) && error.kind === 'unauthorized'
 }
 
 /** Default copy for a kind, for callers that want it without an instance. */

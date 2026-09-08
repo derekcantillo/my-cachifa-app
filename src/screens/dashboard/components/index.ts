@@ -1,3 +1,4 @@
+export { ActiveLoansCard } from './ActiveLoansCard'
 export { GreetingHeader } from './GreetingHeader'
 export { MonthlyBudgetCard } from './MonthlyBudgetCard'
 export { WeeklySummaryCard } from './WeeklySummaryCard'

@@ -26,7 +26,11 @@ import {
 } from '@/components'
 import { useTheme } from '@/theme'
 import { getCurrentMonthKey, type MonthKey } from '@/utils'
-import { BudgetsSection, CategoryFilterChips } from './components'
+import {
+  BudgetsSection,
+  CategoryFilterChips,
+  PendingRecurringExpensesSection,
+} from './components'
 import { useExpensesData, type KindFilter } from './useExpensesData'
 
 const KIND_OPTIONS: ReadonlyArray<SegmentedControlOption<KindFilter>> = [
@@ -126,6 +130,11 @@ export function ExpensesScreen() {
           value={month}
           onChange={setMonth}
           maxMonth={getCurrentMonthKey()}
+        />
+
+        <PendingRecurringExpensesSection
+          month={month}
+          categoriesById={categoriesById}
         />
 
         <BudgetsSection

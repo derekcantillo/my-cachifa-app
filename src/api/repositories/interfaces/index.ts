@@ -10,3 +10,7 @@ export type {
 export type { GoalRepository } from './GoalRepository'
 export type { ReportRepository } from './ReportRepository'
 export type { AccountRepository } from './AccountRepository'
+export type { RecurringExpenseRepository } from './RecurringExpenseRepository'
+export type { SettingsRepository } from './SettingsRepository'
+export type { AlertRepository } from './AlertRepository'
+export type { LoanRepository } from './LoanRepository'

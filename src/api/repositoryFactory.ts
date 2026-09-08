@@ -8,26 +8,38 @@ import { env } from '@/config/env'
 // fiction. Reaching them takes an explicit `API_MODE=mock`.
 import {
   mockAccountRepository,
+  mockAlertRepository,
   mockBudgetRepository,
   mockCategoryRepository,
   mockGoalRepository,
+  mockLoanRepository,
+  mockRecurringExpenseRepository,
   mockReportRepository,
+  mockSettingsRepository,
   mockTransactionRepository,
 } from './repositories/mock'
 import {
   httpAccountRepository,
+  httpAlertRepository,
   httpBudgetRepository,
   httpCategoryRepository,
   httpGoalRepository,
+  httpLoanRepository,
+  httpRecurringExpenseRepository,
   httpReportRepository,
+  httpSettingsRepository,
   httpTransactionRepository,
 } from './repositories/http'
 import type {
   AccountRepository,
+  AlertRepository,
   BudgetRepository,
   CategoryRepository,
   GoalRepository,
+  LoanRepository,
+  RecurringExpenseRepository,
   ReportRepository,
+  SettingsRepository,
   TransactionRepository,
 } from './repositories/interfaces'
 
@@ -90,3 +102,17 @@ export const reportRepository: ReportRepository =
 
 export const accountRepository: AccountRepository =
   apiMode === 'http' ? httpAccountRepository : mockAccountRepository
+
+export const recurringExpenseRepository: RecurringExpenseRepository =
+  apiMode === 'http'
+    ? httpRecurringExpenseRepository
+    : mockRecurringExpenseRepository
+
+export const settingsRepository: SettingsRepository =
+  apiMode === 'http' ? httpSettingsRepository : mockSettingsRepository
+
+export const alertRepository: AlertRepository =
+  apiMode === 'http' ? httpAlertRepository : mockAlertRepository
+
+export const loanRepository: LoanRepository =
+  apiMode === 'http' ? httpLoanRepository : mockLoanRepository

@@ -10,9 +10,11 @@ import { useNavigation } from '@react-navigation/native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import type { Goal, Transaction } from '@/api/types'
 import { AppHeader, FAB } from '@/components'
+import { useUnreadAlertsCount } from '@/hooks'
 import { useTheme } from '@/theme'
 import { daysLeftInMonth } from '@/utils'
 import {
+  ActiveLoansCard,
   CurrentPlanCard,
   DashboardSkeleton,
   GoalsCarousel,
@@ -38,6 +40,7 @@ export function DashboardScreen() {
     categoriesById,
     refetch,
   } = useDashboardData()
+  const unreadAlertsCountQuery = useUnreadAlertsCount()
 
   const handleCreatePress = useCallback(() => {
     navigation.navigate('RegisterTransaction')
@@ -81,12 +84,25 @@ export function DashboardScreen() {
     navigation.navigate('BudgetManagement', { month })
   }, [month, navigation])
 
+  const openAlerts = useCallback(() => {
+    navigation.navigate('Alerts')
+  }, [navigation])
+
+  const openLoans = useCallback(() => {
+    navigation.navigate('Loans')
+  }, [navigation])
+
   return (
     <SafeAreaView
       edges={['top']}
       style={[styles.container, { backgroundColor: colors.background }]}
     >
-      <AppHeader onProfilePress={openSettings} />
+      <AppHeader
+        onProfilePress={openSettings}
+        onSettingsPress={openSettings}
+        onNotificationsPress={openAlerts}
+        unreadAlertsCount={unreadAlertsCountQuery.data ?? 0}
+      />
 
       <ScrollView
         contentContainerStyle={{
@@ -127,6 +143,8 @@ export function DashboardScreen() {
               daysLeft={daysLeftInMonth(month)}
               hasBudget={monthlyBudget.limit > 0}
             />
+
+            <ActiveLoansCard onPress={openLoans} />
 
             <CurrentPlanCard phase={currentPhase} />
 

@@ -1,9 +1,14 @@
 import React from 'react'
 import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import {
+  AlertsScreen,
   BudgetManagementScreen,
   CreateGoalScreen,
+  CreateLoanScreen,
   GoalDetailScreen,
+  LoanDetailScreen,
+  LoansScreen,
+  RecurringExpenseFormScreen,
   RegisterTransactionScreen,
   SettingsScreen,
   TransactionDetailScreen,
@@ -17,14 +22,14 @@ export function RootNavigator() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Main" component={MainTabNavigator} />
-      <Stack.Screen
-        name="Settings"
-        component={SettingsScreen}
-        options={{ headerShown: true, title: 'Ajustes' }}
-      />
 
       {/* The modals draw their own ModalHeader, so the native one stays off. */}
       <Stack.Group screenOptions={{ presentation: 'modal' }}>
+        <Stack.Screen
+          name="Settings"
+          component={SettingsScreen}
+          options={{ title: 'Ajustes' }}
+        />
         <Stack.Screen
           name="RegisterTransaction"
           component={RegisterTransactionScreen}
@@ -49,6 +54,31 @@ export function RootNavigator() {
           name="BudgetManagement"
           component={BudgetManagementScreen}
           options={{ title: 'Gestionar presupuesto' }}
+        />
+        <Stack.Screen
+          name="RecurringExpenseForm"
+          component={RecurringExpenseFormScreen}
+          options={{ title: 'Gasto fijo' }}
+        />
+        <Stack.Screen
+          name="Alerts"
+          component={AlertsScreen}
+          options={{ title: 'Notificaciones' }}
+        />
+        <Stack.Screen
+          name="Loans"
+          component={LoansScreen}
+          options={{ title: 'Préstamos' }}
+        />
+        <Stack.Screen
+          name="LoanDetail"
+          component={LoanDetailScreen}
+          options={{ title: 'Detalle del préstamo' }}
+        />
+        <Stack.Screen
+          name="CreateLoan"
+          component={CreateLoanScreen}
+          options={{ title: 'Prestar dinero' }}
         />
       </Stack.Group>
     </Stack.Navigator>

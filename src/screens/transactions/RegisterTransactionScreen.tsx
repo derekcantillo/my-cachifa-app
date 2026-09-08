@@ -20,6 +20,7 @@ import {
   ErrorNotice,
   InfoCallout,
   ModalScreen,
+  MonthSelector,
   OptionChips,
   SegmentedControl,
   Skeleton,
@@ -32,6 +33,7 @@ import {
 import {
   useAccounts,
   useCategories,
+  useCategoriesForKind,
   useCreateTransaction,
   useTransaction,
   useUpdateTransaction,
@@ -39,7 +41,12 @@ import {
 import type { RootStackParamList } from '@/navigation/types'
 import { getCategoryColor, useTheme } from '@/theme'
 import { formatCurrency } from '@/utils'
-import { useCategoriesForKind, useTransactionForm } from './useTransactionForm'
+import {
+  defaultBudgetPeriod,
+  requiresBudgetPeriod,
+  useTransactionForm,
+  type TransactionFormPrefill,
+} from './useTransactionForm'
 
 const KIND_OPTIONS: ReadonlyArray<SegmentedControlOption<TransactionKind>> = [
   { value: 'expense', label: 'Gasto' },
@@ -73,6 +80,15 @@ export function RegisterTransactionScreen() {
 
   const transactionId = route.params?.transactionId
   const isEditing = transactionId !== undefined
+
+  // Prefill only makes sense for a brand-new movement — editing loads its own.
+  const prefill: TransactionFormPrefill | undefined = isEditing
+    ? undefined
+    : {
+        categoryId: route.params?.category,
+        amount: route.params?.amount,
+        recurringExpenseId: route.params?.recurringExpenseId,
+      }
 
   const transactionQuery = useTransaction(transactionId ?? '', {
     enabled: isEditing,
@@ -128,6 +144,7 @@ export function RegisterTransactionScreen() {
       transaction={transactionQuery.data ?? null}
       categories={categoriesQuery.data ?? []}
       accounts={accountsQuery.data ?? []}
+      prefill={prefill}
     />
   )
 }
@@ -138,6 +155,7 @@ interface TransactionFormProps {
   transaction: Transaction | null
   categories: Category[]
   accounts: Account[]
+  prefill?: TransactionFormPrefill
 }
 
 function TransactionForm({
@@ -145,6 +163,7 @@ function TransactionForm({
   transaction,
   categories,
   accounts,
+  prefill,
 }: TransactionFormProps) {
   const { colors, spacing, typography } = useTheme()
   const navigation = useNavigation()
@@ -155,6 +174,7 @@ function TransactionForm({
   const form = useTransactionForm({
     transaction,
     defaultAccountId: accounts[0]?.id,
+    prefill,
   })
 
   const kindCategories = useCategoriesForKind(categories, form.values.kind)
@@ -245,6 +265,34 @@ function TransactionForm({
         onChange={form.setCategoryId}
         error={form.errors.categoryId}
       />
+
+      {requiresBudgetPeriod(form.values) && (
+        <View style={{ gap: spacing.xs }}>
+          <Text
+            style={{
+              color: colors.textSecondary,
+              fontSize: typography.fontSizes.sm,
+              fontWeight: typography.fontWeights.medium,
+            }}
+          >
+            ¿Para qué mes es este ingreso?
+          </Text>
+          <MonthSelector
+            value={form.values.budgetPeriod ?? defaultBudgetPeriod()}
+            onChange={form.setBudgetPeriod}
+          />
+          {form.errors.budgetPeriod ? (
+            <Text
+              style={{
+                color: colors.negative,
+                fontSize: typography.fontSizes.xs,
+              }}
+            >
+              {form.errors.budgetPeriod}
+            </Text>
+          ) : null}
+        </View>
+      )}
 
       <TextField
         label="Descripción (Opcional)"
