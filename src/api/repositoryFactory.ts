@@ -79,7 +79,7 @@ if (env.isDev) {
   // bundle. This line says which one actually shipped.
   // eslint-disable-next-line no-console
   console.log(
-    `[api] mode=${apiMode}${
+    `[api] target=${env.buildTarget} mode=${apiMode}${
       apiMode === 'http' ? ` baseURL=${env.apiBaseUrl}` : ''
     }`,
   )

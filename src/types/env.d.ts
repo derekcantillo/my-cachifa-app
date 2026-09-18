@@ -3,6 +3,7 @@
  * Every key declared here must exist in `.env.example`.
  */
 declare module '@env' {
+  export const BUILD_TARGET: string | undefined
   export const API_BASE_URL: string | undefined
   export const API_HOST: string | undefined
   export const API_PORT: string | undefined
