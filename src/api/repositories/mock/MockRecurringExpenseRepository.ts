@@ -19,12 +19,14 @@ class MockRecurringExpenseRepository implements RecurringExpenseRepository {
     return recurringExpenses.map(expense => ({ ...expense }))
   }
 
-  async getPending(month: string): Promise<RecurringExpense[]> {
+  async getPending(periodId: string): Promise<RecurringExpense[]> {
     await simulateLatency()
 
-    const monthTransactions = await mockTransactionRepository.list({ month })
+    const periodTransactions = await mockTransactionRepository.list({
+      periodId,
+    })
     const linkedIds = new Set(
-      monthTransactions
+      periodTransactions
         .map(transaction => transaction.recurringExpenseId)
         .filter((id): id is string => Boolean(id)),
     )
@@ -34,9 +36,7 @@ class MockRecurringExpenseRepository implements RecurringExpenseRepository {
       .map(expense => ({ ...expense }))
   }
 
-  async create(
-    input: CreateRecurringExpenseInput,
-  ): Promise<RecurringExpense> {
+  async create(input: CreateRecurringExpenseInput): Promise<RecurringExpense> {
     await simulateWrite()
 
     const created: RecurringExpense = {

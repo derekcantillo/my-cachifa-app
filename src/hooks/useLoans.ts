@@ -29,12 +29,13 @@ export function useLoan(id: string, options: { enabled?: boolean } = {}) {
 
 /**
  * A loan and its repayments each create a linked movement that changes an
- * account's `currentBalance`, so both invalidate accounts too — not just the
- * loans list.
+ * account's `currentBalance` and what is left to collect, so both invalidate
+ * accounts and net worth too — not just the loans list.
  */
 function invalidateLoanConsumers(queryClient: QueryClient): void {
   queryClient.invalidateQueries({ queryKey: queryKeys.loansRoot })
   queryClient.invalidateQueries({ queryKey: queryKeys.accounts() })
+  queryClient.invalidateQueries({ queryKey: queryKeys.netWorth() })
 }
 
 export function useCreateLoan() {

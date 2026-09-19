@@ -42,19 +42,19 @@ function toShare(dto: DistributionItemDto): CategoryExpenseShare {
 }
 
 /**
- * The month's report as the screen wants it, composed from the two period
+ * The period's report as the screen wants it, composed from the two period
  * endpoints the API exposes. Totals it does not report are derived here:
- * spending from the distribution it just sent, and income from the month's
+ * spending from the distribution it just sent, and income from the period's
  * movements, which the query cache is holding anyway for the other screens.
  */
 class HttpReportRepository implements ReportRepository {
-  async getMonthlyReport(month: string): Promise<MonthlyReport> {
+  async getMonthlyReport(periodId: string): Promise<MonthlyReport> {
     const [summary, distribution, income] = await Promise.all([
-      httpClient.get<SummaryDto>(SUMMARY_PATH, { params: { month } }),
+      httpClient.get<SummaryDto>(SUMMARY_PATH, { params: { periodId } }),
       httpClient.get<DistributionItemDto[]>(DISTRIBUTION_PATH, {
-        params: { month },
+        params: { periodId },
       }),
-      httpTransactionRepository.list({ month, kind: 'income' }),
+      httpTransactionRepository.list({ periodId, kind: 'income' }),
     ])
 
     const expenseDistribution = distribution.data.map(toShare)
@@ -64,7 +64,7 @@ class HttpReportRepository implements ReportRepository {
     const actualSaving = toAmount(savingsProgress?.actual)
 
     return {
-      month,
+      periodId,
       totalIncome: income.reduce(
         (total, transaction) => total + transaction.amount,
         0,

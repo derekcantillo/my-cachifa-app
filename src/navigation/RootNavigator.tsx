@@ -3,13 +3,16 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack'
 import {
   AlertsScreen,
   BudgetManagementScreen,
+  CreateAccountScreen,
   CreateGoalScreen,
   CreateLoanScreen,
   GoalDetailScreen,
   LoanDetailScreen,
   LoansScreen,
+  NetWorthScreen,
   RecurringExpenseFormScreen,
   RegisterTransactionScreen,
+  SetInitialBalanceScreen,
   SettingsScreen,
   TransactionDetailScreen,
 } from '@/screens'
@@ -79,6 +82,21 @@ export function RootNavigator() {
           name="CreateLoan"
           component={CreateLoanScreen}
           options={{ title: 'Prestar dinero' }}
+        />
+        <Stack.Screen
+          name="NetWorth"
+          component={NetWorthScreen}
+          options={{ title: 'Patrimonio Neto' }}
+        />
+        <Stack.Screen
+          name="CreateAccount"
+          component={CreateAccountScreen}
+          options={{ title: 'Agregar cuenta' }}
+        />
+        <Stack.Screen
+          name="SetInitialBalance"
+          component={SetInitialBalanceScreen}
+          options={{ title: 'Saldo inicial' }}
         />
       </Stack.Group>
     </Stack.Navigator>

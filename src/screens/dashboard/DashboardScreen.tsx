@@ -21,6 +21,7 @@ import {
   GreetingHeader,
   MonthlyBudgetCard,
   RecentTransactionsCard,
+  TotalBalanceCard,
   WeeklySummaryCard,
 } from './components'
 import { useDashboardData } from './useDashboardData'
@@ -30,6 +31,7 @@ export function DashboardScreen() {
   const navigation = useNavigation()
   const {
     month,
+    periodId,
     isLoading,
     isError,
     monthlyBudget,
@@ -81,8 +83,10 @@ export function DashboardScreen() {
   }, [navigation])
 
   const openBudgetManagement = useCallback(() => {
-    navigation.navigate('BudgetManagement', { month })
-  }, [month, navigation])
+    if (periodId !== undefined) {
+      navigation.navigate('BudgetManagement', { periodId })
+    }
+  }, [navigation, periodId])
 
   const openAlerts = useCallback(() => {
     navigation.navigate('Alerts')
@@ -90,6 +94,10 @@ export function DashboardScreen() {
 
   const openLoans = useCallback(() => {
     navigation.navigate('Loans')
+  }, [navigation])
+
+  const openNetWorth = useCallback(() => {
+    navigation.navigate('NetWorth')
   }, [navigation])
 
   return (
@@ -125,6 +133,8 @@ export function DashboardScreen() {
         ) : (
           <>
             <GreetingHeader />
+
+            <TotalBalanceCard onNetWorthPress={openNetWorth} />
 
             <MonthlyBudgetCard
               month={month}

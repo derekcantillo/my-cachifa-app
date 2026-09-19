@@ -12,6 +12,7 @@ import { getCurrentMonthKey } from '@/utils'
 import { httpAccountRepository } from '../repositories/http/HttpAccountRepository'
 import { httpBudgetRepository } from '../repositories/http/HttpBudgetRepository'
 import { httpCategoryRepository } from '../repositories/http/HttpCategoryRepository'
+import { httpFinancialPeriodRepository } from '../repositories/http/HttpFinancialPeriodRepository'
 import { httpGoalRepository } from '../repositories/http/HttpGoalRepository'
 import { httpReportRepository } from '../repositories/http/HttpReportRepository'
 import { httpTransactionRepository } from '../repositories/http/HttpTransactionRepository'
@@ -25,6 +26,11 @@ function isNumber(value: unknown): boolean {
 }
 
 it('drives every screen path against the running backend', async () => {
+  const period = await httpFinancialPeriodRepository.getCurrent()
+  console.log('período actual:', period)
+  expect(period.endDate).toBeNull()
+  const periodId = period.id
+
   const accounts = await httpAccountRepository.list()
   const categories = await httpCategoryRepository.list()
   console.log('accounts:', accounts)
@@ -47,12 +53,12 @@ it('drives every screen path against the running backend', async () => {
   expect(isNumber(created.amount)).toBe(true)
   expect(created.categoryId).toBe('FOOD')
 
-  const list = await httpTransactionRepository.list({ month })
+  const list = await httpTransactionRepository.list({ periodId })
   expect(list.some(t => t.id === created.id)).toBe(true)
   expect(list.every(t => isNumber(t.amount))).toBe(true)
 
   const filtered = await httpTransactionRepository.list({
-    month,
+    periodId,
     kind: 'expense',
     categoryId: 'FOOD',
   })
@@ -62,14 +68,14 @@ it('drives every screen path against the running backend', async () => {
   expect(fetched?.id).toBe(created.id)
   await httpTransactionRepository.update(created.id, { amount: 60 })
 
-  const budgets = await httpBudgetRepository.list({ month })
+  const budgets = await httpBudgetRepository.list({ periodId })
   console.log('presupuestos:', budgets)
   expect(
     budgets.every(b => isNumber(b.monthlyLimit) && b.monthlyLimit > 0),
   ).toBe(true)
 
   // --- Reportes --------------------------------------------------------
-  const report = await httpReportRepository.getMonthlyReport(month)
+  const report = await httpReportRepository.getMonthlyReport(periodId)
   console.log('reporte:', report)
   expect(
     [
@@ -130,27 +136,37 @@ it('drives every screen path against the running backend', async () => {
 })
 
 /**
- * What every screen gets on a month the user has not touched — the state the
- * mocks never produced, because their seed data always had something to show.
+ * What the screens get when stepping back to the oldest period — likely a thin
+ * one, the state the mocks never produced because their seed always had
+ * something to show. An unknown `periodId` is a 404, so there is no way to ask
+ * for a guaranteed-empty period any more.
  */
-it('returns clean, finite figures for a month with nothing in it', async () => {
-  const emptyMonth = '1999-01'
+it('returns clean, finite figures for the oldest period', async () => {
+  const periods = await httpFinancialPeriodRepository.getAll()
+  console.log(
+    'períodos:',
+    periods.map(p => p.label),
+  )
+  expect(periods.filter(p => p.endDate === null)).toHaveLength(1)
+
+  const oldest = periods[periods.length - 1]
+  if (!oldest) {
+    throw new Error('The backend returned no financial periods')
+  }
 
   const [transactions, budgets, report] = await Promise.all([
-    httpTransactionRepository.list({ month: emptyMonth }),
-    httpBudgetRepository.list({ month: emptyMonth }),
-    httpReportRepository.getMonthlyReport(emptyMonth),
+    httpTransactionRepository.list({ periodId: oldest.id }),
+    httpBudgetRepository.list({ periodId: oldest.id }),
+    httpReportRepository.getMonthlyReport(oldest.id),
   ])
-  console.log('reporte de un mes vacío:', report)
+  console.log('reporte del período más antiguo:', report)
 
-  expect(transactions).toHaveLength(0)
-  expect(budgets).toHaveLength(0)
+  expect(transactions.every(t => isNumber(t.amount))).toBe(true)
+  expect(budgets.every(b => isNumber(b.monthlyLimit))).toBe(true)
 
-  // Empty, not broken: the screens branch on these, and a NaN would reach the
-  // charts and the percentages.
-  expect(report.expenseDistribution).toHaveLength(0)
-  expect(report.topExpenseCategoryId).toBeNull()
-  expect(report.mostFrequentCategoryId).toBeNull()
+  // Not broken: the screens branch on these, and a NaN would reach the charts
+  // and the percentages.
+  expect(report.expenseDistribution.every(s => isNumber(s.amount))).toBe(true)
   expect(
     [
       report.totalIncome,

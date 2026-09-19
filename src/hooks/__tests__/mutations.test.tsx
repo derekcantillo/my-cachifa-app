@@ -1,7 +1,7 @@
 import React from 'react'
 import { act, create } from 'react-test-renderer'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { getCurrentMonthKey } from '@/utils'
+import { CURRENT_PERIOD_ID } from '@/api/repositories/mock/seed-data'
 import { useBudgets, useResetBudgets, useUpdateBudgets } from '../useBudgets'
 import {
   useAddGoalContribution,
@@ -176,12 +176,12 @@ describe('goal mutations (API_MODE=mock)', () => {
 })
 
 describe('budget mutations (API_MODE=mock)', () => {
-  const month = getCurrentMonthKey()
+  const periodId = CURRENT_PERIOD_ID
 
   it('creates, updates and clears limits in one batch', async () => {
     const client = createTestClient()
     const result = renderWithClient(
-      () => ({ budgets: useBudgets({ month }), save: useUpdateBudgets() }),
+      () => ({ budgets: useBudgets({ periodId }), save: useUpdateBudgets() }),
       client,
     )
 
@@ -193,7 +193,7 @@ describe('budget mutations (API_MODE=mock)', () => {
 
     await act(async () => {
       await result.get().save.mutateAsync({
-        month,
+        periodId,
         limits: [
           {
             categoryId: 'ENTERTAINMENT',
@@ -211,13 +211,13 @@ describe('budget mutations (API_MODE=mock)', () => {
     expect(saved?.monthlyLimit).toBe(175)
   })
 
-  it('clears every limit of the period when the month is reset', async () => {
+  it('clears every limit of the period when the period is reset', async () => {
     const client = createTestClient()
-    const resetMonth = '2031-05'
+    const resetPeriodId = 'per-future'
 
     const result = renderWithClient(
       () => ({
-        budgets: useBudgets({ month: resetMonth }),
+        budgets: useBudgets({ periodId: resetPeriodId }),
         save: useUpdateBudgets(),
         reset: useResetBudgets(),
       }),
@@ -228,7 +228,7 @@ describe('budget mutations (API_MODE=mock)', () => {
 
     await act(async () => {
       await result.get().save.mutateAsync({
-        month: resetMonth,
+        periodId: resetPeriodId,
         limits: [{ categoryId: 'HEALTH', monthlyLimit: 400 }],
       })
     })
@@ -236,7 +236,7 @@ describe('budget mutations (API_MODE=mock)', () => {
     expect(result.get().budgets.data).toHaveLength(1)
 
     await act(async () => {
-      await result.get().reset.mutateAsync(resetMonth)
+      await result.get().reset.mutateAsync(resetPeriodId)
     })
     await settle()
 

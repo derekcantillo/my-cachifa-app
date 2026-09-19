@@ -8,7 +8,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { SafeAreaProvider, type Metrics } from 'react-native-safe-area-context'
 import { seedAlerts, seedLoans } from '@/api/repositories/mock/seed-data'
 import { ThemeProvider } from '@/theme'
-import { getCurrentMonthKey } from '@/utils'
+import { CURRENT_PERIOD_ID } from '@/api/repositories/mock/seed-data'
 import { RootNavigator } from '../RootNavigator'
 import type { RootStackParamList } from '../types'
 
@@ -95,7 +95,10 @@ function pressByText(rendered: ReactTestRenderer, text: string): void {
   }
 
   let current = textNode.parent
-  while (current && typeof (current.props as { onPress?: unknown }).onPress !== 'function') {
+  while (
+    current &&
+    typeof (current.props as { onPress?: unknown }).onPress !== 'function'
+  ) {
     current = current.parent
   }
 
@@ -191,7 +194,7 @@ describe('root modal routes', () => {
 
     act(() => {
       navigationRef.navigate('BudgetManagement', {
-        month: getCurrentMonthKey(),
+        periodId: CURRENT_PERIOD_ID,
       })
     })
     await settle()
@@ -217,6 +220,71 @@ describe('root modal routes', () => {
     expect(hasText(rendered, 'Arriendo')).toBe(true)
     expect(hasText(rendered, 'Servicios públicos')).toBe(true)
     expect(hasText(rendered, 'Agregar gasto fijo')).toBe(true)
+  })
+
+  it('lists the accounts in Settings, above the fixed expenses', async () => {
+    const rendered = renderApp()
+    await settle()
+
+    act(() => {
+      navigationRef.navigate('Settings')
+    })
+    await settle()
+
+    expect(hasText(rendered, 'Cuentas')).toBe(true)
+    expect(hasText(rendered, 'Cuenta principal')).toBe(true)
+    expect(hasText(rendered, 'Tarjeta Débito')).toBe(true)
+    expect(hasText(rendered, 'Agregar cuenta')).toBe(true)
+
+    pressByText(rendered, 'Efectivo')
+    await settle()
+
+    expect(hasText(rendered, 'Saldo de partida')).toBe(true)
+    expect(hasText(rendered, 'Fecha del saldo')).toBe(true)
+  })
+
+  it('opens the create-account modal with the four account types', async () => {
+    const rendered = renderApp()
+    await settle()
+
+    act(() => {
+      navigationRef.navigate('CreateAccount')
+    })
+    await settle()
+
+    expect(hasText(rendered, 'Tipo de cuenta')).toBe(true)
+    expect(hasText(rendered, 'Tarjeta Débito')).toBe(true)
+    expect(hasText(rendered, 'Tarjeta de Crédito')).toBe(true)
+    expect(hasText(rendered, 'Efectivo')).toBe(true)
+    expect(hasText(rendered, 'Cuenta de Ahorros')).toBe(true)
+  })
+
+  it('shows net worth with the untracked figures as coming soon', async () => {
+    const rendered = renderApp()
+    await settle()
+
+    act(() => {
+      navigationRef.navigate('NetWorth')
+    })
+    // Net worth reads three other mocks, so its latency stacks.
+    await settle(2500)
+
+    expect(hasText(rendered, 'Activos')).toBe(true)
+    expect(hasText(rendered, 'Saldo en cuentas')).toBe(true)
+    expect(hasText(rendered, 'Próximamente')).toBe(true)
+    expect(hasText(rendered, 'Próximamente — deudas y tarjetas')).toBe(true)
+  })
+
+  it('shows the total balance on Inicio with a way into net worth', async () => {
+    const rendered = renderApp()
+    await settle(2500)
+
+    expect(hasText(rendered, 'Saldo total')).toBe(true)
+
+    pressByText(rendered, 'Ver patrimonio')
+    await settle(2500)
+
+    expect(hasText(rendered, 'Patrimonio Neto')).toBe(true)
   })
 
   it('opens the add-recurring-expense modal', async () => {
@@ -247,7 +315,7 @@ describe('root modal routes', () => {
     expect(hasText(rendered, 'Eliminar gasto fijo')).toBe(true)
   })
 
-  it('only asks for a budget period on an INCOME + Salario movement', async () => {
+  it('never asks which period an income is for, not even a salary', async () => {
     const rendered = renderApp()
     await settle()
 
@@ -256,24 +324,13 @@ describe('root modal routes', () => {
     })
     await settle()
 
-    // A plain expense never asks for it.
-    expect(hasText(rendered, '¿Para qué mes es este ingreso?')).toBe(false)
-
     pressByText(rendered, 'Ingreso')
     await settle(300)
-    // Salario is offered once the kind is income, but the field still
-    // doesn't apply until the category itself is picked.
-    expect(hasText(rendered, 'Salario')).toBe(true)
-    expect(hasText(rendered, '¿Para qué mes es este ingreso?')).toBe(false)
-
     pressByText(rendered, 'Salario')
     await settle(300)
 
-    expect(hasText(rendered, '¿Para qué mes es este ingreso?')).toBe(true)
-
-    // Switching back to expense drops the field again.
-    pressByText(rendered, 'Gasto')
-    await settle(300)
+    // The backend files every movement under the period its date falls in.
+    expect(hasText(rendered, 'Salario')).toBe(true)
     expect(hasText(rendered, '¿Para qué mes es este ingreso?')).toBe(false)
   })
 
@@ -400,7 +457,8 @@ describe('root modal routes', () => {
 
   it('shows the active-loans card on Inicio, reflecting only what is not fully paid', async () => {
     const rendered = renderApp()
-    await settle()
+    // Inicio waits for the current period before loading its figures.
+    await settle(2500)
 
     const active = seedLoans.filter(loan => loan.status !== 'paid')
     expect(active).toHaveLength(1)

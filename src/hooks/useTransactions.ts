@@ -3,10 +3,18 @@ import { transactionRepository } from '@/api/repositoryFactory'
 import type { ListTransactionsParams } from '@/api/repositories/interfaces/TransactionRepository'
 import { queryKeys } from './queryKeys'
 
-export function useTransactions(params?: ListTransactionsParams) {
+/**
+ * Pass `enabled: false` while the period to filter by is still loading, so the
+ * list is not fetched for the backend's default period first.
+ */
+export function useTransactions(
+  params?: ListTransactionsParams,
+  options: { enabled?: boolean } = {},
+) {
   return useQuery({
     queryKey: queryKeys.transactions(params),
     queryFn: () => transactionRepository.list(params),
+    enabled: options.enabled ?? true,
   })
 }
 

@@ -24,6 +24,9 @@ export const BACKEND_CATEGORIES = [
   'SALARY',
   'CONTINGENCY',
   'LOAN',
+  'EDUCATION',
+  'TAXES',
+  'PERSONAL',
   'OTHER',
 ] as const
 
@@ -120,6 +123,24 @@ const DEFINITIONS: Record<BackendCategory, CategoryDefinition> = {
     kinds: [],
     icon: 'loan',
     description: 'Dinero prestado a terceros',
+  },
+  EDUCATION: {
+    label: 'Educación',
+    kinds: ['expense'],
+    icon: 'education',
+    description: 'Matrículas, cursos, libros',
+  },
+  TAXES: {
+    label: 'Impuestos',
+    kinds: ['expense'],
+    icon: 'receipt',
+    description: 'Renta, predial, impuesto vehicular',
+  },
+  PERSONAL: {
+    label: 'Gastos personales',
+    kinds: ['expense'],
+    icon: 'shopping-bag',
+    description: 'Ropa, cuidado personal, compras',
   },
   // The backend has no other income-specific value, so OTHER carries income too.
   OTHER: {

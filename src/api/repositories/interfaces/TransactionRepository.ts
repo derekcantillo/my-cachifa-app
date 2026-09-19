@@ -6,8 +6,8 @@ import type {
 } from '../../types/transaction'
 
 export interface ListTransactionsParams {
-  /** Filter by period, formatted 'YYYY-MM'. */
-  month?: string
+  /** `FinancialPeriod.id`; the backend defaults to the open period. */
+  periodId?: string
   kind?: TransactionKind
   categoryId?: string
   accountId?: string

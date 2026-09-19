@@ -19,7 +19,7 @@ const BASE_PATH = '/budgets'
 
 interface BudgetDto {
   id: string
-  monthYear: string
+  periodId: string
   category: BackendCategory
   limitAmount: number | string
   spentAmount: number | string
@@ -34,34 +34,34 @@ interface BudgetItem {
 }
 
 /**
- * A budget is keyed by month + category in the backend (a unique constraint),
- * and the only write endpoint is an upsert of a month's limits — there is no
+ * A budget is keyed by period + category in the backend (a unique constraint),
+ * and the only write endpoint is an upsert of a period's limits — there is no
  * `PATCH /budgets/:id`. So the id the app carries around is that pair rather
  * than the row's cuid: it is the only handle that lets `update` and `remove`
  * address a limit in a single request.
  */
 const ID_SEPARATOR = ':'
 
-function toBudgetId(month: string, category: BackendCategory): string {
-  return `${month}${ID_SEPARATOR}${category}`
+function toBudgetId(periodId: string, category: BackendCategory): string {
+  return `${periodId}${ID_SEPARATOR}${category}`
 }
 
 function parseBudgetId(id: string): {
-  month: string
+  periodId: string
   category: BackendCategory
 } {
-  const [month = '', category = ''] = id.split(ID_SEPARATOR)
-  return { month, category: toCategoryId(category) }
+  const [periodId = '', category = ''] = id.split(ID_SEPARATOR)
+  return { periodId, category: toCategoryId(category) }
 }
 
 function toBudget(dto: BudgetDto): Budget {
   const category = toCategoryId(dto.category)
 
   return {
-    id: toBudgetId(dto.monthYear, category),
+    id: toBudgetId(dto.periodId, category),
     categoryId: category,
     monthlyLimit: toAmount(dto.limitAmount),
-    month: dto.monthYear,
+    periodId: dto.periodId,
   }
 }
 
@@ -72,21 +72,21 @@ class HttpBudgetRepository implements BudgetRepository {
    */
   async list(params: ListBudgetsParams = {}): Promise<Budget[]> {
     const response = await httpClient.get<BudgetDto[]>(BASE_PATH, {
-      params: params.month ? { month: params.month } : {},
+      params: params.periodId ? { periodId: params.periodId } : {},
     })
 
     return response.data.map(toBudget).filter(budget => budget.monthlyLimit > 0)
   }
 
   async getById(id: string): Promise<Budget | null> {
-    const { month, category } = parseBudgetId(id)
-    const budgets = await this.list({ month })
+    const { periodId, category } = parseBudgetId(id)
+    const budgets = await this.list({ periodId })
     return budgets.find(budget => budget.categoryId === category) ?? null
   }
 
   async create(input: CreateBudgetInput): Promise<Budget> {
     return this.upsert(
-      input.month,
+      input.periodId,
       toBackendCategory(input.categoryId),
       input.monthlyLimit,
     )
@@ -94,20 +94,20 @@ class HttpBudgetRepository implements BudgetRepository {
 
   async update(id: string, input: UpdateBudgetInput): Promise<Budget> {
     const current = parseBudgetId(id)
-    const month = input.month ?? current.month
+    const periodId = input.periodId ?? current.periodId
     const category = input.categoryId
       ? toBackendCategory(input.categoryId)
       : current.category
 
     if (input.monthlyLimit === undefined) {
-      const existing = await this.getById(toBudgetId(month, category))
+      const existing = await this.getById(toBudgetId(periodId, category))
       if (!existing) {
         throw new Error(`Budget ${id} not found`)
       }
       return existing
     }
 
-    return this.upsert(month, category, input.monthlyLimit)
+    return this.upsert(periodId, category, input.monthlyLimit)
   }
 
   /**
@@ -115,16 +115,16 @@ class HttpBudgetRepository implements BudgetRepository {
    * category" looks like, and `list` filters those out.
    */
   async remove(id: string): Promise<void> {
-    const { month, category } = parseBudgetId(id)
-    await this.upsert(month, category, 0)
+    const { periodId, category } = parseBudgetId(id)
+    await this.upsert(periodId, category, 0)
   }
 
   /**
-   * `PUT /budgets?month` upserts only the categories it is given and leaves
-   * the rest of the month untouched, so one item per call is safe.
+   * `PUT /budgets?periodId` upserts only the categories it is given and
+   * leaves the rest of the period untouched, so one item per call is safe.
    */
   private async upsert(
-    month: string,
+    periodId: string,
     category: BackendCategory,
     limitAmount: number,
   ): Promise<Budget> {
@@ -133,21 +133,21 @@ class HttpBudgetRepository implements BudgetRepository {
     const response = await httpClient.put<BudgetDto[]>(
       BASE_PATH,
       { items },
-      { params: { month } },
+      { params: { periodId } },
     )
 
     const saved = response.data
       .map(toBudget)
       .find(budget => budget.categoryId === category)
 
-    // The response is the whole month, so the row just written is in it; this
+    // The response is the whole period, so the row just written is in it; this
     // only guards against a shape change on the API side.
     return (
       saved ?? {
-        id: toBudgetId(month, category),
+        id: toBudgetId(periodId, category),
         categoryId: category,
         monthlyLimit: limitAmount,
-        month,
+        periodId,
       }
     )
   }

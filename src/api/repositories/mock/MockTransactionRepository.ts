@@ -9,7 +9,7 @@ import type {
   TransactionRepository,
 } from '../interfaces/TransactionRepository'
 import { simulateLatency, simulateWrite } from './latency'
-import { seedTransactions } from './seed-data'
+import { isInPeriod, seedFinancialPeriods, seedTransactions } from './seed-data'
 
 let transactions: Transaction[] = seedTransactions.map(transaction => ({
   ...transaction,
@@ -19,9 +19,16 @@ class MockTransactionRepository implements TransactionRepository {
   async list(params: ListTransactionsParams = {}): Promise<Transaction[]> {
     await simulateLatency()
 
+    // An unknown period matches nothing, like a period with no movements.
+    const period = params.periodId
+      ? seedFinancialPeriods.find(({ id }) => id === params.periodId)
+      : undefined
+
     return transactions
       .filter(transaction =>
-        params.month ? transaction.date.startsWith(params.month) : true,
+        params.periodId
+          ? period !== undefined && isInPeriod(transaction.date, period)
+          : true,
       )
       .filter(transaction =>
         params.kind ? transaction.kind === params.kind : true,

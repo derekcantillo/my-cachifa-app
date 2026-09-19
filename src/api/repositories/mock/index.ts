@@ -8,3 +8,5 @@ export { mockRecurringExpenseRepository } from './MockRecurringExpenseRepository
 export { mockSettingsRepository } from './MockSettingsRepository'
 export { mockAlertRepository } from './MockAlertRepository'
 export { mockLoanRepository } from './MockLoanRepository'
+export { mockFinancialPeriodRepository } from './MockFinancialPeriodRepository'
+export { mockNetWorthRepository } from './MockNetWorthRepository'

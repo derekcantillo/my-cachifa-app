@@ -14,8 +14,11 @@ import {
   toCategoryId,
 } from '../mappers/categoryMapper'
 import { toAmount, toOptionalAmount } from '../mappers/decimalMapper'
+import { httpAccountRepository } from '../repositories/http/HttpAccountRepository'
 import { httpBudgetRepository } from '../repositories/http/HttpBudgetRepository'
+import { httpFinancialPeriodRepository } from '../repositories/http/HttpFinancialPeriodRepository'
 import { httpGoalRepository } from '../repositories/http/HttpGoalRepository'
+import { httpNetWorthRepository } from '../repositories/http/HttpNetWorthRepository'
 import { httpReportRepository } from '../repositories/http/HttpReportRepository'
 import { httpTransactionRepository } from '../repositories/http/HttpTransactionRepository'
 import { getCurrentMonthKey } from '@/utils'
@@ -237,7 +240,7 @@ describe('HttpTransactionRepository', () => {
     tags: ['recurrente'],
     accountId: 'acc-1',
     transactionDate: '2026-07-20T10:00:00.000Z',
-    monthYear: '2026-07',
+    periodId: 'per-2026-07',
     createdAt: '2026-07-20T10:00:00.000Z',
     updatedAt: '2026-07-20T10:00:00.000Z',
   }
@@ -246,7 +249,7 @@ describe('HttpTransactionRepository', () => {
     route('GET /transactions', { data: [dto] })
 
     const [transaction] = await httpTransactionRepository.list({
-      month: '2026-07',
+      periodId: 'per-2026-07',
     })
 
     expect(transaction).toEqual({
@@ -261,7 +264,7 @@ describe('HttpTransactionRepository', () => {
       createdAt: '2026-07-20T10:00:00.000Z',
       updatedAt: '2026-07-20T10:00:00.000Z',
     })
-    expect(requests[0]?.params).toEqual({ month: '2026-07' })
+    expect(requests[0]?.params).toEqual({ periodId: 'per-2026-07' })
   })
 
   it('reads a debt payment as money out', async () => {
@@ -283,7 +286,7 @@ describe('HttpTransactionRepository', () => {
     })
 
     const expenses = await httpTransactionRepository.list({
-      month: '2026-07',
+      periodId: 'per-2026-07',
       kind: 'expense',
       categoryId: 'FOOD',
     })
@@ -327,7 +330,7 @@ describe('HttpTransactionRepository', () => {
 describe('HttpBudgetRepository', () => {
   const budgetDto = {
     id: 'bud-1',
-    monthYear: '2026-07',
+    periodId: 'per-2026-07',
     category: 'FOOD',
     limitAmount: '450.00',
     spentAmount: '120.00',
@@ -336,16 +339,18 @@ describe('HttpBudgetRepository', () => {
     updatedAt: '2026-07-01T00:00:00.000Z',
   }
 
-  it('keys a budget by month and category, the pair the API is unique on', async () => {
+  it('keys a budget by period and category, the pair the API is unique on', async () => {
     route('GET /budgets', { data: [budgetDto] })
 
-    const [budget] = await httpBudgetRepository.list({ month: '2026-07' })
+    const [budget] = await httpBudgetRepository.list({
+      periodId: 'per-2026-07',
+    })
 
     expect(budget).toEqual({
-      id: '2026-07:FOOD',
+      id: 'per-2026-07:FOOD',
       categoryId: 'FOOD',
       monthlyLimit: 450,
-      month: '2026-07',
+      periodId: 'per-2026-07',
     })
   })
 
@@ -354,20 +359,20 @@ describe('HttpBudgetRepository', () => {
       data: [budgetDto, { ...budgetDto, category: 'DEBT', limitAmount: 0 }],
     })
 
-    const budgets = await httpBudgetRepository.list({ month: '2026-07' })
+    const budgets = await httpBudgetRepository.list({ periodId: 'per-2026-07' })
     expect(budgets.map(budget => budget.categoryId)).toEqual(['FOOD'])
   })
 
-  it('saves one category at a time through the month upsert', async () => {
+  it('saves one category at a time through the period upsert', async () => {
     route('PUT /budgets', { data: [{ ...budgetDto, limitAmount: '500.00' }] })
 
     const saved = await httpBudgetRepository.create({
       categoryId: 'FOOD',
       monthlyLimit: 500,
-      month: '2026-07',
+      periodId: 'per-2026-07',
     })
 
-    expect(requests[0]?.params).toEqual({ month: '2026-07' })
+    expect(requests[0]?.params).toEqual({ periodId: 'per-2026-07' })
     expect(requests[0]?.body).toEqual({
       items: [{ category: 'FOOD', limitAmount: 500 }],
     })
@@ -377,7 +382,7 @@ describe('HttpBudgetRepository', () => {
   it('clears a limit to zero instead of deleting, which the API cannot do', async () => {
     route('PUT /budgets', { data: [{ ...budgetDto, limitAmount: 0 }] })
 
-    await httpBudgetRepository.remove('2026-07:FOOD')
+    await httpBudgetRepository.remove('per-2026-07:FOOD')
 
     expect(requests[0]?.method).toBe('PUT')
     expect(requests[0]?.body).toEqual({
@@ -490,7 +495,7 @@ describe('HttpGoalRepository', () => {
 })
 
 describe('HttpReportRepository', () => {
-  it('composes the month from the summary, the distribution and the income', async () => {
+  it('composes the period from the summary, the distribution and the income', async () => {
     route('GET /reports/summary', {
       data: {
         biggestExpense: { category: 'HOUSING', amount: '120.00' },
@@ -519,17 +524,17 @@ describe('HttpReportRepository', () => {
           tags: [],
           accountId: 'acc-1',
           transactionDate: '2026-07-05T00:00:00.000Z',
-          monthYear: '2026-07',
+          periodId: 'per-2026-07',
           createdAt: '2026-07-05T00:00:00.000Z',
           updatedAt: '2026-07-05T00:00:00.000Z',
         },
       ],
     })
 
-    const report = await httpReportRepository.getMonthlyReport('2026-07')
+    const report = await httpReportRepository.getMonthlyReport('per-2026-07')
 
     expect(report).toEqual({
-      month: '2026-07',
+      periodId: 'per-2026-07',
       totalIncome: 1800,
       totalExpense: 200,
       totalSaving: 200,
@@ -544,7 +549,7 @@ describe('HttpReportRepository', () => {
     })
   })
 
-  it('stays at zero for a month with nothing in it', async () => {
+  it('stays at zero for a period with nothing in it', async () => {
     route('GET /reports/summary', {
       data: {
         biggestExpense: null,
@@ -555,11 +560,135 @@ describe('HttpReportRepository', () => {
     route('GET /reports/distribution', { data: [] })
     route('GET /transactions', { data: [] })
 
-    const report = await httpReportRepository.getMonthlyReport('1999-01')
+    const report = await httpReportRepository.getMonthlyReport('per-empty')
 
     expect(report.totalExpense).toBe(0)
     expect(report.totalIncome).toBe(0)
     expect(report.topExpenseCategoryId).toBeNull()
     expect(Number.isNaN(report.plannedSaving)).toBe(false)
+  })
+})
+
+describe('HttpFinancialPeriodRepository', () => {
+  const current = {
+    id: 'per-current',
+    label: '28 ago 2026 – en curso',
+    startDate: '2026-08-28T05:00:00.000Z',
+    endDate: null,
+  }
+  const previous = {
+    id: 'per-previous',
+    label: '28 jul 2026 – 27 ago 2026',
+    startDate: '2026-07-28T05:00:00.000Z',
+    endDate: '2026-08-28T05:00:00.000Z',
+  }
+
+  it('lists every period as the API sends them', async () => {
+    route('GET /financial-periods', { data: [current, previous] })
+
+    const periods = await httpFinancialPeriodRepository.getAll()
+
+    expect(periods).toEqual([current, previous])
+  })
+
+  it('reads the open period from its own endpoint', async () => {
+    route('GET /financial-periods/current', { data: current })
+
+    const period = await httpFinancialPeriodRepository.getCurrent()
+
+    expect(requests[0]?.url).toBe('/financial-periods/current')
+    expect(period).toEqual(current)
+  })
+})
+
+describe('HttpAccountRepository', () => {
+  const accountDto = {
+    id: 'acc-1',
+    name: 'Nómina',
+    type: 'DEBIT_CARD',
+    initialBalance: '500000.00',
+    initialBalanceDate: '2026-08-01T05:00:00.000Z',
+    currentBalance: '742500.50',
+    createdAt: '2026-08-01T05:00:00.000Z',
+    updatedAt: '2026-08-01T05:00:00.000Z',
+  }
+
+  it('maps the balances the backend computes, amounts included', async () => {
+    route('GET /accounts', { data: [accountDto] })
+
+    const [account] = await httpAccountRepository.list()
+
+    expect(account).toEqual({
+      id: 'acc-1',
+      name: 'Nómina',
+      type: 'bank',
+      initialBalance: 500000,
+      initialBalanceDate: '2026-08-01T05:00:00.000Z',
+      currentBalance: 742500.5,
+    })
+  })
+
+  it('creates an account with the enum value the API expects', async () => {
+    route('POST /accounts', {
+      data: { ...accountDto, type: 'SAVINGS_ACCOUNT' },
+    })
+
+    const created = await httpAccountRepository.create({
+      name: 'Colchón',
+      type: 'savings',
+    })
+
+    expect(requests[0]?.body).toEqual({
+      name: 'Colchón',
+      type: 'SAVINGS_ACCOUNT',
+    })
+    expect(created.type).toBe('savings')
+  })
+
+  it('sets the starting balance through its own endpoint', async () => {
+    route('PATCH /accounts/acc-1/initial-balance', {
+      data: { ...accountDto, initialBalance: -200, currentBalance: -200 },
+    })
+
+    const updated = await httpAccountRepository.setInitialBalance('acc-1', {
+      amount: -200,
+      date: '2026-09-01T05:00:00.000Z',
+    })
+
+    expect(requests[0]?.body).toEqual({
+      amount: -200,
+      date: '2026-09-01T05:00:00.000Z',
+    })
+    expect(updated.currentBalance).toBe(-200)
+  })
+})
+
+describe('HttpNetWorthRepository', () => {
+  it('reads the snapshot, turning serialised decimals into numbers', async () => {
+    route('GET /net-worth', {
+      data: {
+        assets: {
+          accountsBalance: '742500.50',
+          receivables: 150000,
+          goalsSavings: '300000.00',
+          creditCardsAvailable: 0,
+        },
+        liabilities: { debts: 0, creditCardsDebt: 0 },
+        netWorth: '1192500.50',
+      },
+    })
+
+    const netWorth = await httpNetWorthRepository.get()
+
+    expect(netWorth).toEqual({
+      assets: {
+        accountsBalance: 742500.5,
+        receivables: 150000,
+        goalsSavings: 300000,
+        creditCardsAvailable: 0,
+      },
+      liabilities: { debts: 0, creditCardsDebt: 0 },
+      netWorth: 1192500.5,
+    })
   })
 })

@@ -12,12 +12,6 @@ export interface Transaction {
   tags: string[]
   /** Set when this movement fulfils a `RecurringExpense` for the period. */
   recurringExpenseId?: string
-  /**
-   * `YYYY-MM` this income counts toward. Only meaningful for a SALARY income
-   * — see `RegisterTransactionScreen` — every other movement is filed under
-   * the month `date` falls in.
-   */
-  budgetPeriod?: string
   createdAt: string
   updatedAt: string
 }
@@ -31,7 +25,6 @@ export interface CreateTransactionInput {
   description: string
   tags?: string[]
   recurringExpenseId?: string
-  budgetPeriod?: string
 }
 
 export type UpdateTransactionInput = Partial<CreateTransactionInput>

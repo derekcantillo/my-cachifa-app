@@ -5,7 +5,14 @@ export type {
   UpdateTransactionInput,
 } from './transaction'
 export type { Category } from './category'
-export type { Account, AccountType } from './account'
+export type { FinancialPeriod } from './financialPeriod'
+export type {
+  Account,
+  AccountType,
+  CreateAccountInput,
+  SetInitialBalanceInput,
+} from './account'
+export type { NetWorth, NetWorthAssets, NetWorthLiabilities } from './netWorth'
 export type { Budget, CreateBudgetInput, UpdateBudgetInput } from './budget'
 export type {
   Goal,

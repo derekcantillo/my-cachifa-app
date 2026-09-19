@@ -9,7 +9,6 @@ import type {
   CreateRecurringExpenseInput,
   UpdateRecurringExpenseInput,
 } from '@/api/types'
-import type { MonthKey } from '@/utils'
 import { queryKeys } from './queryKeys'
 
 export function useRecurringExpenses() {
@@ -19,15 +18,17 @@ export function useRecurringExpenses() {
   })
 }
 
-export function usePendingRecurringExpenses(month: MonthKey) {
+/** Waits (stays pending) until a `periodId` is known. */
+export function usePendingRecurringExpenses(periodId: string | undefined) {
   return useQuery({
-    queryKey: queryKeys.pendingRecurringExpenses(month),
-    queryFn: () => recurringExpenseRepository.getPending(month),
+    queryKey: queryKeys.pendingRecurringExpenses(periodId ?? ''),
+    queryFn: () => recurringExpenseRepository.getPending(periodId ?? ''),
+    enabled: periodId !== undefined,
   })
 }
 
 /**
- * The backend recalculates the current month's budgets whenever a recurring
+ * The backend recalculates the current period's budgets whenever a recurring
  * expense is created, edited or deleted, so a write here has to refresh
  * budgets too, not just the recurring-expenses list.
  */

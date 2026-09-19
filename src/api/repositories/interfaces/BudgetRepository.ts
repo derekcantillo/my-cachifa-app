@@ -5,8 +5,8 @@ import type {
 } from '../../types/budget'
 
 export interface ListBudgetsParams {
-  /** Filter by period, formatted 'YYYY-MM'. */
-  month?: string
+  /** `FinancialPeriod.id`; the backend defaults to the open period. */
+  periodId?: string
 }
 
 export interface BudgetRepository {

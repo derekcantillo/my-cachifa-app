@@ -4,16 +4,9 @@ import type {
   Transaction,
   TransactionKind,
 } from '@/api/types'
-import { getCurrentMonthKey, shiftMonthKey, type MonthKey } from '@/utils'
 
 /** Tag that marks the twice-a-year bonus, the one income the plan treats apart. */
 export const SEMESTER_BONUS_TAG = 'prima-semestral'
-
-/** The one category `budgetPeriod` applies to — see `requiresBudgetPeriod`. */
-const SALARY_CATEGORY_ID = 'SALARY'
-
-/** Day of the month from which a salary paid now is assumed to cover the next one. */
-const NEXT_MONTH_CUTOFF_DAY = 20
 
 export interface TransactionFormValues {
   kind: TransactionKind
@@ -27,35 +20,11 @@ export interface TransactionFormValues {
   semesterBonus: boolean
   /** Set from a "Pendientes este mes" prefill; cleared the moment kind or category changes. */
   recurringExpenseId: string | null
-  /**
-   * `YYYY-MM` this income covers, only asked for INCOME + Salario. Reset
-   * whenever kind or category changes, and recomputed the next time the
-   * combination applies.
-   */
-  budgetPeriod: MonthKey | null
 }
 
 export type TransactionFormErrors = Partial<
-  Record<'amount' | 'categoryId' | 'accountId' | 'budgetPeriod', string>
+  Record<'amount' | 'categoryId' | 'accountId', string>
 >
-
-/** Whether the form must ask "¿Para qué mes es este ingreso?" — INCOME + Salario only. */
-export function requiresBudgetPeriod(
-  values: Pick<TransactionFormValues, 'kind' | 'categoryId'>,
-): boolean {
-  return values.kind === 'income' && values.categoryId === SALARY_CATEGORY_ID
-}
-
-/**
- * Payroll paid this late in the month is assumed to be covering the next one
- * — a salary received the 28th is this month's pay for next month's budget.
- */
-export function defaultBudgetPeriod(now: Date = new Date()): MonthKey {
-  const current = getCurrentMonthKey()
-  return now.getDate() >= NEXT_MONTH_CUTOFF_DAY
-    ? shiftMonthKey(current, 1)
-    : current
-}
 
 /** Stands in for an empty description, which the form leaves optional. */
 const KIND_FALLBACK_DESCRIPTIONS: Record<TransactionKind, string> = {
@@ -97,7 +66,6 @@ export interface TransactionFormState {
   setDescription: (description: string) => void
   setDate: (date: Date) => void
   setSemesterBonus: (value: boolean) => void
-  setBudgetPeriod: (month: MonthKey) => void
   /** Validates and returns the payload, or `null` when something is missing. */
   validate: () => CreateTransactionInput | null
 }
@@ -117,7 +85,6 @@ function initialValues(
       date: new Date(),
       semesterBonus: false,
       recurringExpenseId: prefill?.recurringExpenseId ?? null,
-      budgetPeriod: null,
     }
   }
 
@@ -130,7 +97,6 @@ function initialValues(
     date: new Date(transaction.date),
     semesterBonus: transaction.tags.includes(SEMESTER_BONUS_TAG),
     recurringExpenseId: transaction.recurringExpenseId ?? null,
-    budgetPeriod: transaction.budgetPeriod ?? null,
   }
 }
 
@@ -168,42 +134,25 @@ export function useTransactionForm({
 
   const setKind = useCallback((kind: TransactionKind) => {
     // Categories belong to a single kind, so switching kinds drops the pick
-    // — and with it, whether "¿Para qué mes es este ingreso?" applies, and
-    // whether this is still the same pending recurring expense.
+    // — and with it, whether this is still the same pending recurring expense.
     setValues(current => ({
       ...current,
       kind,
       categoryId: null,
       semesterBonus: kind === 'income' ? current.semesterBonus : false,
       recurringExpenseId: null,
-      budgetPeriod: null,
     }))
-    setErrors(current => ({
-      ...current,
-      categoryId: undefined,
-      budgetPeriod: undefined,
-    }))
+    setErrors(current => ({ ...current, categoryId: undefined }))
   }, [])
 
   const setCategoryId = useCallback((categoryId: string) => {
-    setValues(current => {
-      const needsPeriod = requiresBudgetPeriod({ kind: current.kind, categoryId })
-
-      return {
-        ...current,
-        categoryId,
-        // A category picked by hand is no longer the prefilled expense.
-        recurringExpenseId: null,
-        budgetPeriod: needsPeriod
-          ? (current.budgetPeriod ?? defaultBudgetPeriod())
-          : null,
-      }
-    })
-    setErrors(current => ({
+    setValues(current => ({
       ...current,
-      categoryId: undefined,
-      budgetPeriod: undefined,
+      categoryId,
+      // A category picked by hand is no longer the prefilled expense.
+      recurringExpenseId: null,
     }))
+    setErrors(current => ({ ...current, categoryId: undefined }))
   }, [])
 
   const validate = useCallback((): CreateTransactionInput | null => {
@@ -217,11 +166,6 @@ export function useTransactionForm({
     }
     if (!values.accountId) {
       nextErrors.accountId = 'Elige una cuenta.'
-    }
-
-    const needsPeriod = requiresBudgetPeriod(values)
-    if (needsPeriod && !values.budgetPeriod) {
-      nextErrors.budgetPeriod = 'Elige para qué mes es este ingreso.'
     }
 
     setErrors(nextErrors)
@@ -251,9 +195,6 @@ export function useTransactionForm({
       ...(!transaction && values.recurringExpenseId
         ? { recurringExpenseId: values.recurringExpenseId }
         : {}),
-      ...(needsPeriod && values.budgetPeriod
-        ? { budgetPeriod: values.budgetPeriod }
-        : {}),
     }
   }, [passthroughTags, transaction, values])
 
@@ -274,10 +215,6 @@ export function useTransactionForm({
     setDate: useCallback(date => update('date', date), [update]),
     setSemesterBonus: useCallback(
       value => update('semesterBonus', value),
-      [update],
-    ),
-    setBudgetPeriod: useCallback(
-      month => update('budgetPeriod', month),
       [update],
     ),
     validate,

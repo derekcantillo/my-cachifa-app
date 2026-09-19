@@ -7,7 +7,14 @@ import type {
   Transaction,
 } from '@/api/types'
 import { PHASE_ORDER } from '@/components/goals/phases'
-import { useBudgets, useCategories, useGoals, useTransactions } from '@/hooks'
+import {
+  useBudgets,
+  useCategories,
+  useCurrentPeriod,
+  useGoals,
+  useNetWorth,
+  useTransactions,
+} from '@/hooks'
 import {
   getCurrentMonthKey,
   indexById,
@@ -33,7 +40,10 @@ interface MonthlyBudgetSummary {
 }
 
 export interface DashboardData {
+  /** Calendar month, only for the budget card's heading and days-left count. */
   month: MonthKey
+  /** The open financial period every figure comes from; `undefined` while loading. */
+  periodId: string | undefined
   isLoading: boolean
   isError: boolean
   monthlyBudget: MonthlyBudgetSummary
@@ -70,16 +80,23 @@ function resolveCurrentPhase(goals: readonly Goal[]): GoalPhase | null {
 }
 
 /**
- * Composes the current month's transactions, budgets, goals and categories
+ * Composes the current period's transactions, budgets, goals and categories
  * into the figures the dashboard renders. All data comes from the repository
  * hooks — the screen holds no numbers of its own.
  */
 export function useDashboardData(): DashboardData {
   const month = getCurrentMonthKey()
 
-  const transactionsQuery = useTransactions({ month })
-  const budgetsQuery = useBudgets({ month })
+  // The dashboard always shows the open period; there is no selector here.
+  const currentPeriodQuery = useCurrentPeriod()
+  const periodId = currentPeriodQuery.data?.id
+  const enabled = periodId !== undefined
+
+  const transactionsQuery = useTransactions({ periodId }, { enabled })
+  const budgetsQuery = useBudgets({ periodId }, { enabled })
   const goalsQuery = useGoals()
+  // Rendered by its own card; held here only so pull-to-refresh reaches it.
+  const netWorthQuery = useNetWorth()
   const categoriesQuery = useCategories()
 
   const transactions = useMemo(
@@ -134,12 +151,15 @@ export function useDashboardData(): DashboardData {
 
   return {
     month,
+    periodId,
     isLoading:
+      currentPeriodQuery.isPending ||
       transactionsQuery.isPending ||
       budgetsQuery.isPending ||
       goalsQuery.isPending ||
       categoriesQuery.isPending,
     isError:
+      currentPeriodQuery.isError ||
       transactionsQuery.isError ||
       budgetsQuery.isError ||
       goalsQuery.isError ||
@@ -151,6 +171,8 @@ export function useDashboardData(): DashboardData {
     recentTransactions,
     categoriesById,
     refetch: () => {
+      currentPeriodQuery.refetch()
+      netWorthQuery.refetch()
       transactionsQuery.refetch()
       budgetsQuery.refetch()
       goalsQuery.refetch()

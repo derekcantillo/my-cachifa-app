@@ -1,4 +1,5 @@
 import React from 'react'
+import { CURRENT_PERIOD_ID } from '@/api/repositories/mock/seed-data'
 import { act, create } from 'react-test-renderer'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { useBudgets } from '../useBudgets'
@@ -83,17 +84,16 @@ describe('data layer hooks (API_MODE=mock)', () => {
     )
   })
 
-  it('useReports resolves a report for the current month', async () => {
+  it('useReports resolves a report for the current period', async () => {
     const client = createTestClient()
-    const month = new Date().toISOString().slice(0, 7)
-    const hook = renderWithClient(() => useReports(month), client)
+    const hook = renderWithClient(() => useReports(CURRENT_PERIOD_ID), client)
 
     // The report's own latency stacks with the transaction/budget lookups it
     // performs internally, so its worst case is roughly double a plain query.
     await wait(2000)
 
     expect(hook.get().isSuccess).toBe(true)
-    expect(hook.get().data?.month).toBe(month)
+    expect(hook.get().data?.periodId).toBe(CURRENT_PERIOD_ID)
   })
 
   it('useCreateTransaction invalidates useTransactions so the list grows', async () => {

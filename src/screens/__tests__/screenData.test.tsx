@@ -11,6 +11,9 @@ import {
 import { useGoalsData, PROJECTION_MONTHS } from '../goals/useGoalsData'
 import { useReportsData } from '../reports/useReportsData'
 
+/** The mock seed's open period; screens may not import the seed directly. */
+const CURRENT_PERIOD_ID = 'per-current'
+
 /** How often `settle` checks whether the queries have come to rest. */
 const POLL_MS = 50
 
@@ -98,6 +101,7 @@ describe('useDashboardData (API_MODE=mock)', () => {
     expect(data.isLoading).toBe(false)
     expect(data.isError).toBe(false)
     expect(data.month).toBe(getCurrentMonthKey())
+    expect(data.periodId).toBe(CURRENT_PERIOD_ID)
 
     // Only expense budgets count towards the monthly limit; the saving budget
     // is a target, not something to spend.
@@ -117,7 +121,7 @@ describe('useDashboardData (API_MODE=mock)', () => {
 
 describe('useExpensesData (API_MODE=mock)', () => {
   const baseFilters: ExpenseFilters = {
-    month: getCurrentMonthKey(),
+    periodId: CURRENT_PERIOD_ID,
     kind: 'all',
     categoryId: null,
   }
@@ -157,9 +161,9 @@ describe('useExpensesData (API_MODE=mock)', () => {
     ).toBe(true)
   })
 
-  it('returns nothing for a month without movements', async () => {
+  it('returns nothing for a period without movements', async () => {
     const result = renderWithClient(() =>
-      useExpensesData({ ...baseFilters, month: '1999-01' }),
+      useExpensesData({ ...baseFilters, periodId: 'per-empty' }),
     )
 
     await settle()
@@ -167,15 +171,15 @@ describe('useExpensesData (API_MODE=mock)', () => {
     const data = result.get()
     expect(data.transactions).toHaveLength(0)
     expect(data.budgetRows).toHaveLength(0)
-    // Nothing to filter out: the month itself is empty, which is the empty
+    // Nothing to filter out: the period itself is empty, which is the empty
     // state that offers to register a movement.
     expect(data.hasMonthMovements).toBe(false)
     expect(data.isTransactionsLoading).toBe(false)
   })
 
-  it('tells an empty month apart from a filter that excludes everything', async () => {
+  it('tells an empty period apart from a filter that excludes everything', async () => {
     // Income never carries a spending category, so the pair matches nothing in
-    // a month that does have movements.
+    // a period that does have movements.
     const result = renderWithClient(() =>
       useExpensesData({ ...baseFilters, kind: 'income', categoryId: 'FOOD' }),
     )
@@ -229,8 +233,7 @@ describe('useGoalsData (API_MODE=mock)', () => {
 
 describe('useReportsData (API_MODE=mock)', () => {
   it('derives the monthly insights and the expense distribution', async () => {
-    const month = getCurrentMonthKey()
-    const result = renderWithClient(() => useReportsData(month))
+    const result = renderWithClient(() => useReportsData(CURRENT_PERIOD_ID))
 
     expect(result.get().isLoading).toBe(true)
 
@@ -260,8 +263,8 @@ describe('useReportsData (API_MODE=mock)', () => {
     })
   })
 
-  it('stays empty-but-valid for a month without movements', async () => {
-    const result = renderWithClient(() => useReportsData('1999-01'))
+  it('stays empty-but-valid for a period without movements', async () => {
+    const result = renderWithClient(() => useReportsData('per-empty'))
 
     await settle()
 
@@ -276,7 +279,7 @@ describe('useReportsData (API_MODE=mock)', () => {
     expect(data.isLoading).toBe(false)
     expect(data.hasMovements).toBe(false)
 
-    // Nothing derived from an empty month may come out as NaN.
+    // Nothing derived from an empty period may come out as NaN.
     expect(Number.isNaN(data.saving.percentOfPlan)).toBe(false)
     expect(Number.isNaN(data.saving.difference)).toBe(false)
   })

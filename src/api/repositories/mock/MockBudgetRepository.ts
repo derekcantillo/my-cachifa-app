@@ -18,7 +18,9 @@ class MockBudgetRepository implements BudgetRepository {
     await simulateLatency()
 
     return budgets
-      .filter(budget => (params.month ? budget.month === params.month : true))
+      .filter(budget =>
+        params.periodId ? budget.periodId === params.periodId : true,
+      )
       .map(budget => ({ ...budget }))
   }
 

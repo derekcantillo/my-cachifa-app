@@ -24,6 +24,8 @@ const GLYPHS: Record<string, string> = {
   gift: '🎁',
   health: '🩺',
   education: '🎓',
+  receipt: '🧾',
+  'shopping-bag': '🛍️',
   salary: '💼',
   contingency: '🛟',
   loan: '🤝',

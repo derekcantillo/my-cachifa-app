@@ -1,10 +1,16 @@
 import { CATEGORY_CATALOG } from '@/api/mappers/categoryMapper'
 import { getCurrentMonthKey, shiftMonthKey } from '@/utils'
 import { mockBudgetRepository } from '../MockBudgetRepository'
+import { mockFinancialPeriodRepository } from '../MockFinancialPeriodRepository'
 import { mockGoalRepository } from '../MockGoalRepository'
 import { mockReportRepository } from '../MockReportRepository'
 import { mockTransactionRepository } from '../MockTransactionRepository'
-import { seedAccounts, seedBudgets, seedTransactions } from '../seed-data'
+import {
+  CURRENT_PERIOD_ID,
+  seedAccounts,
+  seedBudgets,
+  seedTransactions,
+} from '../seed-data'
 
 describe('seed data', () => {
   it('covers the requested expense categories', () => {
@@ -38,9 +44,9 @@ describe('seed data', () => {
     })
   })
 
-  it('keeps at most one budget per category and month', () => {
+  it('keeps at most one budget per category and period', () => {
     const keys = seedBudgets.map(
-      budget => `${budget.month}:${budget.categoryId}`,
+      budget => `${budget.periodId}:${budget.categoryId}`,
     )
     expect(new Set(keys).size).toBe(keys.length)
   })
@@ -116,7 +122,7 @@ describe('mockTransactionRepository', () => {
 })
 
 describe('mockBudgetRepository', () => {
-  it('lists budgets for the current month by default', async () => {
+  it('lists budgets for every period by default', async () => {
     const budgets = await mockBudgetRepository.list()
     expect(budgets.length).toBeGreaterThan(0)
   })
@@ -125,7 +131,7 @@ describe('mockBudgetRepository', () => {
     const created = await mockBudgetRepository.create({
       categoryId: 'ENTERTAINMENT',
       monthlyLimit: 10,
-      month: '2099-01',
+      periodId: 'per-future',
     })
     expect(await mockBudgetRepository.getById(created.id)).not.toBeNull()
 
@@ -205,11 +211,12 @@ describe('mockGoalRepository', () => {
 })
 
 describe('mockReportRepository', () => {
-  it('aggregates income, expense and saving totals for the current month', async () => {
-    const month = new Date().toISOString().slice(0, 7)
-    const report = await mockReportRepository.getMonthlyReport(month)
+  it('aggregates income, expense and saving totals for the current period', async () => {
+    const report = await mockReportRepository.getMonthlyReport(
+      CURRENT_PERIOD_ID,
+    )
 
-    expect(report.month).toBe(month)
+    expect(report.periodId).toBe(CURRENT_PERIOD_ID)
     expect(report.totalIncome).toBeGreaterThan(0)
     expect(report.totalExpense).toBeGreaterThan(0)
     expect(report.topExpenseCategoryId).not.toBeNull()
@@ -222,11 +229,33 @@ describe('mockReportRepository', () => {
     expect(distributionTotal).toBeCloseTo(report.totalExpense, 5)
   })
 
-  it('returns an empty-but-valid report for a month with no data', async () => {
-    const report = await mockReportRepository.getMonthlyReport('2000-01')
+  it('returns an empty-but-valid report for a period with no data', async () => {
+    const report = await mockReportRepository.getMonthlyReport('per-unknown')
     expect(report.totalIncome).toBe(0)
     expect(report.totalExpense).toBe(0)
     expect(report.topExpenseCategoryId).toBeNull()
     expect(report.expenseDistribution).toEqual([])
+  })
+})
+
+describe('mockFinancialPeriodRepository', () => {
+  it('lists the periods most recent first, with exactly one open', async () => {
+    const periods = await mockFinancialPeriodRepository.getAll()
+
+    expect(periods.length).toBeGreaterThanOrEqual(2)
+    expect(periods.filter(period => period.endDate === null)).toHaveLength(1)
+    expect(periods[0]?.endDate).toBeNull()
+    periods.slice(1).forEach((period, index) => {
+      // Each closed period ends exactly where the next one starts.
+      expect(period.endDate).toBe(periods[index]?.startDate)
+    })
+  })
+
+  it('returns the open period as the current one', async () => {
+    const current = await mockFinancialPeriodRepository.getCurrent()
+
+    expect(current.id).toBe(CURRENT_PERIOD_ID)
+    expect(current.endDate).toBeNull()
+    expect(current.label).toMatch(/– en curso$/)
   })
 })

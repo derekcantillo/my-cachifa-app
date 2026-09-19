@@ -1,5 +1,11 @@
 import { httpClient } from '../../httpClient'
-import type { Account, AccountType } from '../../types/account'
+import { toAmount } from '../../mappers/decimalMapper'
+import type {
+  Account,
+  AccountType,
+  CreateAccountInput,
+  SetInitialBalanceInput,
+} from '../../types/account'
 import type { AccountRepository } from '../interfaces/AccountRepository'
 
 const BASE_PATH = '/accounts'
@@ -15,6 +21,9 @@ interface AccountDto {
   id: string
   name: string
   type: BackendAccountType
+  initialBalance: number | string
+  initialBalanceDate: string | null
+  currentBalance: number | string
   createdAt: string
   updatedAt: string
 }
@@ -26,12 +35,21 @@ const ACCOUNT_TYPES: Record<BackendAccountType, AccountType> = {
   SAVINGS_ACCOUNT: 'savings',
 }
 
-/** The API sends no balance and no currency: money lives in the transactions. */
+const BACKEND_ACCOUNT_TYPES: Record<AccountType, BackendAccountType> = {
+  bank: 'DEBIT_CARD',
+  credit_card: 'CREDIT_CARD',
+  cash: 'CASH',
+  savings: 'SAVINGS_ACCOUNT',
+}
+
 function toAccount(dto: AccountDto): Account {
   return {
     id: dto.id,
     name: dto.name,
     type: ACCOUNT_TYPES[dto.type] ?? 'bank',
+    initialBalance: toAmount(dto.initialBalance),
+    initialBalanceDate: dto.initialBalanceDate ?? null,
+    currentBalance: toAmount(dto.currentBalance),
   }
 }
 
@@ -48,6 +66,25 @@ class HttpAccountRepository implements AccountRepository {
   async getById(id: string): Promise<Account | null> {
     const accounts = await this.list()
     return accounts.find(account => account.id === id) ?? null
+  }
+
+  async create(input: CreateAccountInput): Promise<Account> {
+    const response = await httpClient.post<AccountDto>(BASE_PATH, {
+      name: input.name,
+      type: BACKEND_ACCOUNT_TYPES[input.type],
+    })
+    return toAccount(response.data)
+  }
+
+  async setInitialBalance(
+    id: string,
+    input: SetInitialBalanceInput,
+  ): Promise<Account> {
+    const response = await httpClient.patch<AccountDto>(
+      `${BASE_PATH}/${id}/initial-balance`,
+      { amount: input.amount, date: input.date },
+    )
+    return toAccount(response.data)
   }
 }
 

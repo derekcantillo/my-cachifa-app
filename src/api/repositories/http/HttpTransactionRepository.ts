@@ -32,8 +32,7 @@ interface TransactionDto {
   accountId: string | null
   recurringExpenseId: string | null
   transactionDate: string
-  monthYear: string
-  budgetPeriod: string | null
+  periodId: string | null
   createdAt: string
   updatedAt: string
 }
@@ -47,7 +46,6 @@ interface TransactionPayload {
   recurringExpenseId?: string
   tags?: string[]
   transactionDate?: string
-  budgetPeriod?: string
 }
 
 /**
@@ -81,7 +79,6 @@ function toTransaction(dto: TransactionDto): Transaction {
     ...(dto.recurringExpenseId
       ? { recurringExpenseId: dto.recurringExpenseId }
       : {}),
-    ...(dto.budgetPeriod ? { budgetPeriod: dto.budgetPeriod } : {}),
     createdAt: dto.createdAt,
     updatedAt: dto.updatedAt,
   }
@@ -104,23 +101,18 @@ function toPayload(input: UpdateTransactionInput): TransactionPayload {
       : {}),
     ...(input.tags !== undefined ? { tags: input.tags } : {}),
     ...(input.date !== undefined ? { transactionDate: input.date } : {}),
-    // Only sent when the form actually shows the field (INCOME + SALARY);
-    // every other combination lets the backend derive it from the date.
-    ...(input.budgetPeriod !== undefined
-      ? { budgetPeriod: input.budgetPeriod }
-      : {}),
   }
 }
 
 class HttpTransactionRepository implements TransactionRepository {
   /**
    * The API filters by period only, so the remaining filters are applied here
-   * on the month's rows — a handful of records the screen already needs whole
+   * on the period's rows — a handful of records the screen already needs whole
    * to compute what each budget has spent.
    */
   async list(params: ListTransactionsParams = {}): Promise<Transaction[]> {
     const response = await httpClient.get<TransactionDto[]>(BASE_PATH, {
-      params: params.month ? { month: params.month } : {},
+      params: params.periodId ? { periodId: params.periodId } : {},
     })
 
     const categoryId = params.categoryId

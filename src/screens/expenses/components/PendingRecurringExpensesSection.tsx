@@ -5,25 +5,25 @@ import type { Category, RecurringExpense } from '@/api/types'
 import { Card, CategoryIcon, SectionHeader, Separator } from '@/components'
 import { usePendingRecurringExpenses } from '@/hooks'
 import { useTheme } from '@/theme'
-import { formatCurrency, type MonthKey } from '@/utils'
+import { formatCurrency } from '@/utils'
 
 interface PendingRecurringExpensesSectionProps {
-  month: MonthKey
+  periodId: string | undefined
   categoriesById: Record<string, Category>
 }
 
 /**
- * Active recurring expenses with no movement registered for `month` yet.
+ * Active recurring expenses with no movement registered for the period yet.
  * Absent entirely once nothing is pending — no space, no empty state — since
- * an all-caught-up month has nothing here worth telling the user about.
+ * an all-caught-up period has nothing here worth telling the user about.
  */
 export function PendingRecurringExpensesSection({
-  month,
+  periodId,
   categoriesById,
 }: PendingRecurringExpensesSectionProps) {
   const { spacing } = useTheme()
   const navigation = useNavigation()
-  const pendingQuery = usePendingRecurringExpenses(month)
+  const pendingQuery = usePendingRecurringExpenses(periodId)
 
   const openRegister = useCallback(
     (expense: RecurringExpense) => {
@@ -71,7 +71,9 @@ function PendingRow({ expense, category, onRegister }: PendingRowProps) {
   const { colors, spacing, typography } = useTheme()
 
   return (
-    <View style={[styles.row, { gap: spacing.sm, paddingVertical: spacing.xs }]}>
+    <View
+      style={[styles.row, { gap: spacing.sm, paddingVertical: spacing.xs }]}
+    >
       <CategoryIcon
         icon={category?.icon ?? 'wallet'}
         categoryId={category?.id}

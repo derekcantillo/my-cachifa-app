@@ -3,7 +3,7 @@ import type { Category, MonthlyReport } from '@/api/types'
 import type { PieChartSlice } from '@/components'
 import { useCategories, useReports } from '@/hooks'
 import { getCategoryColor } from '@/theme'
-import { indexById, type MonthKey } from '@/utils'
+import { indexById } from '@/utils'
 
 export interface CategoryInsight {
   category: Category | undefined
@@ -17,7 +17,7 @@ export interface CategoryInsight {
 export interface SavingInsight {
   actual: number
   planned: number
-  /** Positive when the month beat the plan. */
+  /** Positive when the period beat the plan. */
   difference: number
   /** Share of the planned amount actually saved, 0-100+. */
   percentOfPlan: number
@@ -74,12 +74,12 @@ function toInsight(
 }
 
 /**
- * Composes the monthly report and the category catalog into the insights and
+ * Composes the period's report and the category catalog into the insights and
  * the donut the reports screen draws. Every figure comes from the repository
  * hooks — the screen holds no numbers of its own.
  */
-export function useReportsData(month: MonthKey): ReportsData {
-  const reportQuery = useReports(month)
+export function useReportsData(periodId: string | undefined): ReportsData {
+  const reportQuery = useReports(periodId)
   const categoriesQuery = useCategories()
 
   const categoriesById = useMemo(

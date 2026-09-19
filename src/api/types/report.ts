@@ -6,8 +6,8 @@ export interface CategoryExpenseShare {
 }
 
 export interface MonthlyReport {
-  /** Period the report covers, formatted 'YYYY-MM'. */
-  month: string
+  /** `FinancialPeriod.id` the report covers. */
+  periodId: string
   totalIncome: number
   totalExpense: number
   totalSaving: number

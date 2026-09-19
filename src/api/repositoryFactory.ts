@@ -11,8 +11,10 @@ import {
   mockAlertRepository,
   mockBudgetRepository,
   mockCategoryRepository,
+  mockFinancialPeriodRepository,
   mockGoalRepository,
   mockLoanRepository,
+  mockNetWorthRepository,
   mockRecurringExpenseRepository,
   mockReportRepository,
   mockSettingsRepository,
@@ -23,8 +25,10 @@ import {
   httpAlertRepository,
   httpBudgetRepository,
   httpCategoryRepository,
+  httpFinancialPeriodRepository,
   httpGoalRepository,
   httpLoanRepository,
+  httpNetWorthRepository,
   httpRecurringExpenseRepository,
   httpReportRepository,
   httpSettingsRepository,
@@ -35,8 +39,10 @@ import type {
   AlertRepository,
   BudgetRepository,
   CategoryRepository,
+  FinancialPeriodRepository,
   GoalRepository,
   LoanRepository,
+  NetWorthRepository,
   RecurringExpenseRepository,
   ReportRepository,
   SettingsRepository,
@@ -116,3 +122,11 @@ export const alertRepository: AlertRepository =
 
 export const loanRepository: LoanRepository =
   apiMode === 'http' ? httpLoanRepository : mockLoanRepository
+
+export const financialPeriodRepository: FinancialPeriodRepository =
+  apiMode === 'http'
+    ? httpFinancialPeriodRepository
+    : mockFinancialPeriodRepository
+
+export const netWorthRepository: NetWorthRepository =
+  apiMode === 'http' ? httpNetWorthRepository : mockNetWorthRepository

@@ -7,13 +7,20 @@ import {
 import { budgetRepository } from '@/api/repositoryFactory'
 import type { ListBudgetsParams } from '@/api/repositories/interfaces/BudgetRepository'
 import type { Budget } from '@/api/types'
-import type { MonthKey } from '@/utils'
 import { queryKeys } from './queryKeys'
 
-export function useBudgets(params?: ListBudgetsParams) {
+/**
+ * Pass `enabled: false` while the period to filter by is still loading, so the
+ * limits are not fetched for the backend's default period first.
+ */
+export function useBudgets(
+  params?: ListBudgetsParams,
+  options: { enabled?: boolean } = {},
+) {
   return useQuery({
     queryKey: queryKeys.budgets(params),
     queryFn: () => budgetRepository.list(params),
+    enabled: options.enabled ?? true,
   })
 }
 
@@ -34,18 +41,18 @@ export interface BudgetLimitInput {
 }
 
 export interface UpdateBudgetsVariables {
-  month: MonthKey
+  periodId: string
   limits: BudgetLimitInput[]
 }
 
 function applyLimit(
-  month: MonthKey,
+  periodId: string,
   { budgetId, categoryId, monthlyLimit }: BudgetLimitInput,
 ): Promise<Budget | void> {
   if (budgetId === undefined) {
     // A category with no limit and no budget yet has nothing to save.
     return monthlyLimit > 0
-      ? budgetRepository.create({ categoryId, monthlyLimit, month })
+      ? budgetRepository.create({ categoryId, monthlyLimit, periodId })
       : Promise.resolve()
   }
 
@@ -56,7 +63,7 @@ function applyLimit(
 }
 
 /**
- * Saves a whole month of limits at once: existing ones are updated, new
+ * Saves a whole period of limits at once: existing ones are updated, new
  * categories get a budget created, and a limit cleared to zero is removed.
  * The screen passes only the rows the user actually touched.
  */
@@ -65,10 +72,10 @@ export function useUpdateBudgets() {
 
   return useMutation({
     mutationFn: async ({
-      month,
+      periodId,
       limits,
     }: UpdateBudgetsVariables): Promise<void> => {
-      await Promise.all(limits.map(limit => applyLimit(month, limit)))
+      await Promise.all(limits.map(limit => applyLimit(periodId, limit)))
     },
     onSuccess: () => {
       invalidateBudgetConsumers(queryClient)
@@ -76,13 +83,17 @@ export function useUpdateBudgets() {
   })
 }
 
-/** Clears every limit set for a period, so the month can be planned from scratch. */
+/**
+ * Clears every limit set for a period, so it can be planned from scratch. Not
+ * `POST /budgets/:periodId/reset`: that one only resyncs the spent amounts and
+ * leaves the limits in place.
+ */
 export function useResetBudgets() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async (month: MonthKey): Promise<void> => {
-      const budgets = await budgetRepository.list({ month })
+    mutationFn: async (periodId: string): Promise<void> => {
+      const budgets = await budgetRepository.list({ periodId })
       await Promise.all(
         budgets.map(budget => budgetRepository.remove(budget.id)),
       )

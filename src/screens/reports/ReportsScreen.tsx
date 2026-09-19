@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react'
+import React, { useCallback } from 'react'
 import {
   RefreshControl,
   ScrollView,
@@ -14,16 +14,12 @@ import {
   CategoryIcon,
   ChartIcon,
   EmptyState,
-  MonthSelector,
+  PeriodSelector,
   Skeleton,
 } from '@/components'
 import { useTheme } from '@/theme'
-import {
-  formatCurrency,
-  formatMonthName,
-  getCurrentMonthKey,
-  type MonthKey,
-} from '@/utils'
+import { useSelectedPeriod } from '@/hooks'
+import { formatCurrency } from '@/utils'
 import { ExpenseDistributionCard, InsightCard } from './components'
 import { useReportsData } from './useReportsData'
 
@@ -33,7 +29,7 @@ export function ReportsScreen() {
   const { colors, spacing, typography } = useTheme()
   const navigation = useNavigation()
 
-  const [month, setMonth] = useState<MonthKey>(getCurrentMonthKey)
+  const period = useSelectedPeriod()
 
   const {
     hasMovements,
@@ -42,10 +38,17 @@ export function ReportsScreen() {
     saving,
     distribution,
     totalExpense,
-    isLoading,
-    isError,
-    refetch,
-  } = useReportsData(month)
+    isLoading: isReportLoading,
+    isError: isReportError,
+    refetch: refetchReport,
+  } = useReportsData(period.selectedPeriodId)
+
+  const isLoading = period.isLoading || isReportLoading
+  const isError = period.isError || isReportError
+  const refetch = () => {
+    period.refetch()
+    refetchReport()
+  }
 
   const openSettings = useCallback(() => {
     navigation.navigate('Settings')
@@ -58,8 +61,8 @@ export function ReportsScreen() {
   const savingBeatsPlan = saving.difference >= 0
 
   // Registering a movement now lands on the current period, so offering it as
-  // the way out of an empty past month would be a dead end.
-  const isCurrentMonth = month === getCurrentMonthKey()
+  // the way out of an empty past period would be a dead end.
+  const { isCurrentPeriod } = period
 
   return (
     <SafeAreaView
@@ -89,11 +92,13 @@ export function ReportsScreen() {
           Reportes
         </Text>
 
-        <MonthSelector
-          value={month}
-          onChange={setMonth}
-          maxMonth={getCurrentMonthKey()}
-        />
+        {period.selectedPeriodId !== undefined && (
+          <PeriodSelector
+            periods={period.periods}
+            selectedPeriodId={period.selectedPeriodId}
+            onPeriodChange={period.setSelectedPeriodId}
+          />
+        )}
 
         {isError ? (
           <Card>
@@ -117,15 +122,15 @@ export function ReportsScreen() {
             </Card>
           ))
         ) : !hasMovements ? (
-          // Every insight below is derived from the month's movements. With
+          // Every insight below is derived from the period's movements. With
           // none, four cards reading "Sin datos" and an empty donut say the
           // same thing five times — this says it once.
           <Card>
             <EmptyState
               icon={<ChartIcon size={26} color={colors.textSecondary} />}
-              title={`Sin movimientos en ${formatMonthName(month)}`}
-              description="Cuando registres gastos, ingresos o ahorros de este mes verás aquí tus reportes."
-              {...(isCurrentMonth
+              title="Sin movimientos en este período"
+              description="Cuando registres gastos, ingresos o ahorros de este período verás aquí tus reportes."
+              {...(isCurrentPeriod
                 ? {
                     actionLabel: 'Registrar movimiento',
                     onAction: openRegisterTransaction,

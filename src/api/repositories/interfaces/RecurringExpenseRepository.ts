@@ -6,8 +6,8 @@ import type {
 
 export interface RecurringExpenseRepository {
   getAll(): Promise<RecurringExpense[]>
-  /** Active expenses with no `Transaction` of `month` linked to them yet. */
-  getPending(month: string): Promise<RecurringExpense[]>
+  /** Active expenses with no `Transaction` of the period linked to them yet. */
+  getPending(periodId: string): Promise<RecurringExpense[]>
   create(input: CreateRecurringExpenseInput): Promise<RecurringExpense>
   update(
     id: string,

@@ -29,12 +29,14 @@ const ENTRIES: readonly CategoryColorEntry[] = [
   { id: 'SALARY', icon: 'salary', color: '#16A34A' },
   { id: 'CONTINGENCY', icon: 'contingency', color: '#F59E0B' },
   { id: 'LOAN', icon: 'loan', color: '#0D9488' },
+  { id: 'EDUCATION', icon: 'education', color: '#84CC16' },
+  { id: 'TAXES', icon: 'receipt', color: '#7C2D12' },
+  { id: 'PERSONAL', icon: 'shopping-bag', color: '#EC4899' },
   { id: 'OTHER', icon: 'wallet', color: '#64748B' },
   { icon: 'shopping-cart', color: '#16A34A' },
   { icon: 'film', color: '#EC4899' },
   { icon: 'banknote', color: '#16A34A' },
   { icon: 'gift', color: '#F43F5E' },
-  { icon: 'education', color: '#8B5CF6' },
 ]
 
 /** Used when a category is unknown and has no key to derive a color from. */

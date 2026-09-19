@@ -2,7 +2,6 @@ import { useCallback, useMemo, useState } from 'react'
 import type { Budget, Category, TransactionKind } from '@/api/types'
 import { useBudgets, useCategories } from '@/hooks'
 import type { BudgetLimitInput } from '@/hooks'
-import type { MonthKey } from '@/utils'
 
 export interface BudgetPlanRow {
   category: Category
@@ -48,8 +47,8 @@ function sumLimits(rows: readonly BudgetPlanRow[]): number {
  * ones the user brings in, with their edits layered over what is saved. Nothing
  * is written until the screen asks for `changedLimits`.
  */
-export function useBudgetPlanner(month: MonthKey): BudgetPlan {
-  const budgetsQuery = useBudgets({ month })
+export function useBudgetPlanner(periodId: string): BudgetPlan {
+  const budgetsQuery = useBudgets({ periodId })
   const categoriesQuery = useCategories()
 
   const [edits, setEdits] = useState<Record<string, number>>({})

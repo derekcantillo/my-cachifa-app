@@ -1,6 +1,7 @@
 import type { Account } from '../../types/account'
 import type { Alert } from '../../types/alert'
 import type { Budget } from '../../types/budget'
+import type { FinancialPeriod } from '../../types/financialPeriod'
 import type { Goal } from '../../types/goal'
 import type { Loan } from '../../types/loan'
 import type { RecurringExpense } from '../../types/recurringExpense'
@@ -25,27 +26,103 @@ function currentMonth(): string {
   return new Date().toISOString().slice(0, 7)
 }
 
+/** Midnight (local) `days` days ago, as the backend anchors a period on a day. */
+function startOfDayAgoISO(days: number): string {
+  const date = new Date()
+  date.setDate(date.getDate() - days)
+  date.setHours(0, 0, 0, 0)
+  return date.toISOString()
+}
+
+const SHORT_MONTHS = [
+  'ene',
+  'feb',
+  'mar',
+  'abr',
+  'may',
+  'jun',
+  'jul',
+  'ago',
+  'sep',
+  'oct',
+  'nov',
+  'dic',
+]
+
+function formatLabelDay(date: Date): string {
+  return `${date.getDate()} ${
+    SHORT_MONTHS[date.getMonth()]
+  } ${date.getFullYear()}`
+}
+
+/** Same shape as the backend's label: the end is the last day included. */
+function periodLabel(startDate: string, endDate: string | null): string {
+  const start = formatLabelDay(new Date(startDate))
+  if (endDate === null) {
+    return `${start} – en curso`
+  }
+  const lastDay = new Date(endDate)
+  lastDay.setDate(lastDay.getDate() - 1)
+  return `${start} – ${formatLabelDay(lastDay)}`
+}
+
+function seedPeriod(
+  id: string,
+  startDaysAgo: number,
+  endDaysAgo: number | null,
+): FinancialPeriod {
+  const startDate = startOfDayAgoISO(startDaysAgo)
+  const endDate = endDaysAgo === null ? null : startOfDayAgoISO(endDaysAgo)
+  return { id, label: periodLabel(startDate, endDate), startDate, endDate }
+}
+
+export const CURRENT_PERIOD_ID = 'per-current'
+
+/**
+ * Salary-anchored periods, each ending where the next begins, the open one
+ * last. Relative to "now" like the rest of the seed so the current period
+ * always holds the recent movements.
+ */
+export const seedFinancialPeriods: FinancialPeriod[] = [
+  seedPeriod('per-older', 87, 56),
+  seedPeriod('per-previous', 56, 25),
+  // Opens the day of the seeded income, the way a salary opens one.
+  seedPeriod(CURRENT_PERIOD_ID, 25, null),
+]
+
+/** Whether an ISO date falls in `[startDate, endDate)`. */
+export function isInPeriod(date: string, period: FinancialPeriod): boolean {
+  const time = new Date(date).getTime()
+  return (
+    time >= new Date(period.startDate).getTime() &&
+    (period.endDate === null || time < new Date(period.endDate).getTime())
+  )
+}
+
 export const seedAccounts: Account[] = [
   {
     id: 'acc-main',
     name: 'Cuenta principal',
     type: 'bank',
-    currency: 'USD',
-    balance: 1250.4,
+    initialBalance: 1000,
+    initialBalanceDate: daysAgoISO(90),
+    currentBalance: 1250.4,
   },
   {
     id: 'acc-cash',
     name: 'Efectivo',
     type: 'cash',
-    currency: 'USD',
-    balance: 85,
+    initialBalance: 50,
+    initialBalanceDate: daysAgoISO(90),
+    currentBalance: 85,
   },
   {
     id: 'acc-savings',
     name: 'Ahorros',
     type: 'savings',
-    currency: 'USD',
-    balance: 3200,
+    initialBalance: 3000,
+    initialBalanceDate: daysAgoISO(90),
+    currentBalance: 3200,
   },
 ]
 
@@ -184,11 +261,9 @@ export const seedTransactions: Transaction[] = [
   },
 ]
 
-const currentBudgetMonth = currentMonth()
-
 /**
  * One limit per category, the way the backend stores them (unique on
- * user + month + category). The old "Mercado" and "Entretenimiento" limits are
+ * user + period + category). The old "Mercado" and "Entretenimiento" limits are
  * folded into FOOD and ENTERTAINMENT, which now cover both concepts.
  */
 export const seedBudgets: Budget[] = [
@@ -196,44 +271,44 @@ export const seedBudgets: Budget[] = [
     id: 'bud-food',
     categoryId: 'FOOD',
     monthlyLimit: 450,
-    month: currentBudgetMonth,
+    periodId: CURRENT_PERIOD_ID,
   },
   {
     id: 'bud-transport',
     categoryId: 'TRANSPORT',
     monthlyLimit: 100,
-    month: currentBudgetMonth,
+    periodId: CURRENT_PERIOD_ID,
   },
   {
     id: 'bud-entertainment',
     categoryId: 'ENTERTAINMENT',
     monthlyLimit: 130,
-    month: currentBudgetMonth,
+    periodId: CURRENT_PERIOD_ID,
   },
   {
     id: 'bud-services',
     categoryId: 'SERVICES',
     monthlyLimit: 120,
-    month: currentBudgetMonth,
+    periodId: CURRENT_PERIOD_ID,
   },
   {
     id: 'bud-debt',
     categoryId: 'DEBT',
     monthlyLimit: 200,
-    month: currentBudgetMonth,
+    periodId: CURRENT_PERIOD_ID,
   },
   {
     id: 'bud-housing',
     categoryId: 'HOUSING',
     monthlyLimit: 500,
-    month: currentBudgetMonth,
+    periodId: CURRENT_PERIOD_ID,
   },
   // Reuses the Budget shape as a planned-savings target for the report screen.
   {
     id: 'bud-saving',
     categoryId: 'SAVING',
     monthlyLimit: 300,
-    month: currentBudgetMonth,
+    periodId: CURRENT_PERIOD_ID,
   },
 ]
 

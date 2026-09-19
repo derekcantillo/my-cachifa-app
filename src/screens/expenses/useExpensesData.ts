@@ -6,18 +6,14 @@ import type {
   TransactionKind,
 } from '@/api/types'
 import { useBudgets, useCategories, useTransactions } from '@/hooks'
-import {
-  indexById,
-  sortByDateDesc,
-  sumExpensesByCategory,
-  type MonthKey,
-} from '@/utils'
+import { indexById, sortByDateDesc, sumExpensesByCategory } from '@/utils'
 
 /** 'all' keeps every kind; the rest map straight onto the repository filter. */
 export type KindFilter = TransactionKind | 'all'
 
 export interface ExpenseFilters {
-  month: MonthKey
+  /** `undefined` while the current period is still loading. */
+  periodId: string | undefined
   kind: KindFilter
   /** `null` means "every category". */
   categoryId: string | null
@@ -37,7 +33,7 @@ export interface ExpensesData {
   filterableCategories: Category[]
   /**
    * Whether the period holds any movement at all, ignoring the filters. Tells
-   * "nothing registered this month" apart from "the filter excludes it all",
+   * "nothing registered this period" apart from "the filter excludes it all",
    * which read the same in `transactions` but call for different copy.
    */
   hasMonthMovements: boolean
@@ -50,18 +46,22 @@ export interface ExpensesData {
 }
 
 export function useExpensesData(filters: ExpenseFilters): ExpensesData {
-  const { month, kind, categoryId } = filters
+  const { periodId, kind, categoryId } = filters
+  const enabled = periodId !== undefined
 
-  const budgetsQuery = useBudgets({ month })
+  const budgetsQuery = useBudgets({ periodId }, { enabled })
   const categoriesQuery = useCategories()
 
-  // Budget progress always reflects the whole month, independent of the list filter.
-  const monthTransactionsQuery = useTransactions({ month })
-  const filteredTransactionsQuery = useTransactions({
-    month,
-    ...(kind === 'all' ? {} : { kind }),
-    ...(categoryId ? { categoryId } : {}),
-  })
+  // Budget progress always reflects the whole period, independent of the list filter.
+  const monthTransactionsQuery = useTransactions({ periodId }, { enabled })
+  const filteredTransactionsQuery = useTransactions(
+    {
+      periodId,
+      ...(kind === 'all' ? {} : { kind }),
+      ...(categoryId ? { categoryId } : {}),
+    },
+    { enabled },
+  )
 
   const categoriesById = useMemo(
     () => indexById(categoriesQuery.data ?? []),

@@ -20,7 +20,6 @@ import {
   ErrorNotice,
   InfoCallout,
   ModalScreen,
-  MonthSelector,
   OptionChips,
   SegmentedControl,
   Skeleton,
@@ -42,8 +41,6 @@ import type { RootStackParamList } from '@/navigation/types'
 import { getCategoryColor, useTheme } from '@/theme'
 import { formatCurrency } from '@/utils'
 import {
-  defaultBudgetPeriod,
-  requiresBudgetPeriod,
   useTransactionForm,
   type TransactionFormPrefill,
 } from './useTransactionForm'
@@ -265,34 +262,6 @@ function TransactionForm({
         onChange={form.setCategoryId}
         error={form.errors.categoryId}
       />
-
-      {requiresBudgetPeriod(form.values) && (
-        <View style={{ gap: spacing.xs }}>
-          <Text
-            style={{
-              color: colors.textSecondary,
-              fontSize: typography.fontSizes.sm,
-              fontWeight: typography.fontWeights.medium,
-            }}
-          >
-            ¿Para qué mes es este ingreso?
-          </Text>
-          <MonthSelector
-            value={form.values.budgetPeriod ?? defaultBudgetPeriod()}
-            onChange={form.setBudgetPeriod}
-          />
-          {form.errors.budgetPeriod ? (
-            <Text
-              style={{
-                color: colors.negative,
-                fontSize: typography.fontSizes.xs,
-              }}
-            >
-              {form.errors.budgetPeriod}
-            </Text>
-          ) : null}
-        </View>
-      )}
 
       <TextField
         label="Descripción (Opcional)"

@@ -61,9 +61,7 @@ function toPayload(
     ...(input.isAmountFixed !== undefined
       ? { isAmountFixed: input.isAmountFixed }
       : {}),
-    ...(input.dayOfMonth !== undefined
-      ? { dayOfMonth: input.dayOfMonth }
-      : {}),
+    ...(input.dayOfMonth !== undefined ? { dayOfMonth: input.dayOfMonth } : {}),
     ...(input.active !== undefined ? { active: input.active } : {}),
   }
 }
@@ -74,17 +72,15 @@ class HttpRecurringExpenseRepository implements RecurringExpenseRepository {
     return response.data.map(toRecurringExpense)
   }
 
-  async getPending(month: string): Promise<RecurringExpense[]> {
+  async getPending(periodId: string): Promise<RecurringExpense[]> {
     const response = await httpClient.get<RecurringExpenseDto[]>(
       `${BASE_PATH}/pending`,
-      { params: { month } },
+      { params: { periodId } },
     )
     return response.data.map(toRecurringExpense)
   }
 
-  async create(
-    input: CreateRecurringExpenseInput,
-  ): Promise<RecurringExpense> {
+  async create(input: CreateRecurringExpenseInput): Promise<RecurringExpense> {
     const response = await httpClient.post<RecurringExpenseDto>(
       BASE_PATH,
       toPayload(input),

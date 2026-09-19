@@ -2,14 +2,14 @@ export interface Budget {
   id: string
   categoryId: string
   monthlyLimit: number
-  /** Period this limit applies to, formatted 'YYYY-MM'. */
-  month: string
+  /** `FinancialPeriod.id` this limit applies to. */
+  periodId: string
 }
 
 export interface CreateBudgetInput {
   categoryId: string
   monthlyLimit: number
-  month: string
+  periodId: string
 }
 
 export type UpdateBudgetInput = Partial<CreateBudgetInput>

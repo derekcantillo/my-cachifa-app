@@ -20,10 +20,10 @@ import {
   WalletIcon,
   type ChipOption,
 } from '@/components'
-import { useResetBudgets, useUpdateBudgets } from '@/hooks'
+import { useFinancialPeriods, useResetBudgets, useUpdateBudgets } from '@/hooks'
 import type { RootStackParamList } from '@/navigation/types'
 import { getCategoryColor, useTheme } from '@/theme'
-import { formatCurrency, formatMonthYear, withAlpha } from '@/utils'
+import { formatCurrency, withAlpha } from '@/utils'
 import { BudgetLimitRow } from './components'
 import { useBudgetPlanner } from './useBudgetPlanner'
 
@@ -34,8 +34,13 @@ export function BudgetManagementScreen() {
   const navigation = useNavigation()
   const route = useRoute<BudgetRoute>()
 
-  const { month } = route.params
-  const plan = useBudgetPlanner(month)
+  const { periodId } = route.params
+  const plan = useBudgetPlanner(periodId)
+
+  const periodsQuery = useFinancialPeriods()
+  const periodLabel =
+    periodsQuery.data?.find(period => period.id === periodId)?.label ??
+    'este período'
 
   const [pickerOpen, setPickerOpen] = useState(false)
 
@@ -46,7 +51,7 @@ export function BudgetManagementScreen() {
 
   const handleSave = useCallback(() => {
     updateBudgets.mutate(
-      { month, limits: plan.changedLimits() },
+      { periodId, limits: plan.changedLimits() },
       {
         onSuccess: () => {
           plan.discardChanges()
@@ -54,26 +59,24 @@ export function BudgetManagementScreen() {
         },
       },
     )
-  }, [month, navigation, plan, updateBudgets])
+  }, [navigation, periodId, plan, updateBudgets])
 
   const handleReset = useCallback(() => {
     Alert.alert(
-      'Resetear el mes',
-      `Se borrarán todos los límites de ${formatMonthYear(
-        month,
-      )}. Podrás definirlos de nuevo desde cero.`,
+      'Resetear el período',
+      `Se borrarán todos los límites de ${periodLabel}. Podrás definirlos de nuevo desde cero.`,
       [
         { text: 'Cancelar', style: 'cancel' },
         {
           text: 'Resetear',
           style: 'destructive',
           onPress: () => {
-            resetBudgets.mutate(month, { onSuccess: plan.discardChanges })
+            resetBudgets.mutate(periodId, { onSuccess: plan.discardChanges })
           },
         },
       ],
     )
-  }, [month, plan, resetBudgets])
+  }, [periodId, periodLabel, plan, resetBudgets])
 
   const handleAddCategory = useCallback(
     (categoryId: string) => {
@@ -122,9 +125,7 @@ export function BudgetManagementScreen() {
           },
         ]}
       >
-        {`Ajusta los límites mensuales para cada categoría de ${formatMonthYear(
-          month,
-        )}. Mantén tus metas claras y realistas.`}
+        {`Ajusta los límites para cada categoría de ${periodLabel}. Mantén tus metas claras y realistas.`}
       </Text>
 
       {plan.isLoading ? (
@@ -156,8 +157,8 @@ export function BudgetManagementScreen() {
                   fontSize: typography.fontSizes.sm,
                 }}
               >
-                Este mes no tiene límites definidos. Añade una categoría para
-                empezar.
+                Este período no tiene límites definidos. Añade una categoría
+                para empezar.
               </Text>
             ) : (
               plan.expenseRows.map((row, index) => (
@@ -268,7 +269,7 @@ export function BudgetManagementScreen() {
           <ErrorNotice error={updateBudgets.error ?? resetBudgets.error} />
 
           <Button
-            label="Resetear mes"
+            label="Resetear período"
             variant="danger"
             onPress={handleReset}
             loading={resetBudgets.isPending}

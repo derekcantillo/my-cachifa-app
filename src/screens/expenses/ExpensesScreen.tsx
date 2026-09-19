@@ -15,7 +15,7 @@ import {
   EmptyState,
   FAB,
   FilterIcon,
-  MonthSelector,
+  PeriodSelector,
   SectionHeader,
   SegmentedControl,
   Separator,
@@ -25,7 +25,7 @@ import {
   type SegmentedControlOption,
 } from '@/components'
 import { useTheme } from '@/theme'
-import { getCurrentMonthKey, type MonthKey } from '@/utils'
+import { useSelectedPeriod } from '@/hooks'
 import {
   BudgetsSection,
   CategoryFilterChips,
@@ -44,7 +44,8 @@ export function ExpensesScreen() {
   const { colors, spacing, typography } = useTheme()
   const navigation = useNavigation()
 
-  const [month, setMonth] = useState<MonthKey>(getCurrentMonthKey)
+  const period = useSelectedPeriod()
+  const { selectedPeriodId } = period
   const [kind, setKind] = useState<KindFilter>('all')
   const [categoryId, setCategoryId] = useState<string | null>(null)
   const [filtersOpen, setFiltersOpen] = useState(false)
@@ -57,10 +58,18 @@ export function ExpensesScreen() {
     hasMonthMovements,
     isBudgetsLoading,
     isTransactionsLoading,
-    isBudgetsError,
-    isTransactionsError,
-    refetch,
-  } = useExpensesData({ month, kind, categoryId })
+    isBudgetsError: isPeriodBudgetsError,
+    isTransactionsError: isPeriodTransactionsError,
+    refetch: refetchPeriodData,
+  } = useExpensesData({ periodId: selectedPeriodId, kind, categoryId })
+
+  // Without a period there is nothing to load, so its failure is theirs too.
+  const isBudgetsError = period.isError || isPeriodBudgetsError
+  const isTransactionsError = period.isError || isPeriodTransactionsError
+  const refetch = () => {
+    period.refetch()
+    refetchPeriodData()
+  }
 
   // A category only belongs to one kind, so narrowing the kind clears it.
   const handleKindChange = useCallback((next: KindFilter) => {
@@ -91,8 +100,10 @@ export function ExpensesScreen() {
   )
 
   const openBudgetManagement = useCallback(() => {
-    navigation.navigate('BudgetManagement', { month })
-  }, [month, navigation])
+    if (selectedPeriodId !== undefined) {
+      navigation.navigate('BudgetManagement', { periodId: selectedPeriodId })
+    }
+  }, [navigation, selectedPeriodId])
 
   const openSettings = useCallback(() => {
     navigation.navigate('Settings')
@@ -126,14 +137,16 @@ export function ExpensesScreen() {
           Gastos
         </Text>
 
-        <MonthSelector
-          value={month}
-          onChange={setMonth}
-          maxMonth={getCurrentMonthKey()}
-        />
+        {selectedPeriodId !== undefined && (
+          <PeriodSelector
+            periods={period.periods}
+            selectedPeriodId={selectedPeriodId}
+            onPeriodChange={period.setSelectedPeriodId}
+          />
+        )}
 
         <PendingRecurringExpensesSection
-          month={month}
+          periodId={selectedPeriodId}
           categoriesById={categoriesById}
         />
 
@@ -200,21 +213,21 @@ export function ExpensesScreen() {
                 reintentar.
               </Text>
             ) : transactions.length === 0 ? (
-              // An empty month and a filter that excludes everything both land
+              // An empty period and a filter that excludes everything both land
               // here with nothing to list, but only one of them is the user's
               // doing — and each calls for a different way out.
               hasMonthMovements ? (
                 <EmptyState
                   icon={<FilterIcon size={26} color={colors.textSecondary} />}
                   title="Ningún movimiento coincide"
-                  description="Este mes sí tiene movimientos, pero ninguno pasa el filtro actual."
+                  description="Este período sí tiene movimientos, pero ninguno pasa el filtro actual."
                   actionLabel="Quitar filtros"
                   onAction={clearFilters}
                 />
               ) : (
                 <EmptyState
                   icon={<WalletIcon size={26} color={colors.textSecondary} />}
-                  title="Sin movimientos este mes"
+                  title="Sin movimientos en este período"
                   description="Registra un gasto, un ingreso o un ahorro y aparecerá en esta lista."
                   actionLabel="Registrar movimiento"
                   onAction={handleCreatePress}

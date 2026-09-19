@@ -43,12 +43,12 @@ function pickHighestKey(totals: Record<string, number>): string | null {
 }
 
 class MockReportRepository implements ReportRepository {
-  async getMonthlyReport(month: string): Promise<MonthlyReport> {
+  async getMonthlyReport(periodId: string): Promise<MonthlyReport> {
     await simulateLatency()
 
     const [transactions, budgets] = await Promise.all([
-      mockTransactionRepository.list({ month }),
-      mockBudgetRepository.list({ month }),
+      mockTransactionRepository.list({ periodId }),
+      mockBudgetRepository.list({ periodId }),
     ])
 
     const totalIncome = sumByKind(transactions, 'income')
@@ -72,7 +72,7 @@ class MockReportRepository implements ReportRepository {
     }))
 
     return {
-      month,
+      periodId,
       totalIncome,
       totalExpense,
       totalSaving: actualSaving,

@@ -1,26 +1,38 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import { Platform, Pressable, StyleSheet, Text, View } from 'react-native'
+import type { FinancialPeriod } from '@/api/types'
 import { useTheme } from '@/theme'
-import { formatMonthYear, shiftMonthKey, type MonthKey } from '@/utils'
 import { ChevronLeftIcon, ChevronRightIcon } from './icons'
 
-interface MonthSelectorProps {
-  /** Selected period, formatted 'YYYY-MM'. */
-  value: MonthKey
-  onChange: (month: MonthKey) => void
-  /** Latest selectable period; later months are disabled. */
-  maxMonth?: MonthKey
+interface PeriodSelectorProps {
+  periods: readonly FinancialPeriod[]
+  selectedPeriodId: string
+  onPeriodChange: (id: string) => void
 }
 
-export function MonthSelector({
-  value,
-  onChange,
-  maxMonth,
-}: MonthSelectorProps) {
+/**
+ * Steps through the financial periods one at a time: ← to the one before,
+ * → to the one after. There is nothing after the open period (`endDate`
+ * null), so → stops there.
+ */
+export function PeriodSelector({
+  periods,
+  selectedPeriodId,
+  onPeriodChange,
+}: PeriodSelectorProps) {
   const { colors, scheme, spacing, typography } = useTheme()
 
-  const nextMonth = shiftMonthKey(value, 1)
-  const nextDisabled = maxMonth !== undefined && nextMonth > maxMonth
+  // Oldest first, so "previous" is one index down whatever order they came in.
+  const ordered = useMemo(
+    () => [...periods].sort((a, b) => a.startDate.localeCompare(b.startDate)),
+    [periods],
+  )
+
+  const index = ordered.findIndex(period => period.id === selectedPeriodId)
+  const selected = ordered[index]
+  const previous = index > 0 ? ordered[index - 1] : undefined
+  const next =
+    index >= 0 && selected?.endDate !== null ? ordered[index + 1] : undefined
 
   return (
     <View
@@ -38,26 +50,30 @@ export function MonthSelector({
       ]}
     >
       <ArrowButton
-        accessibilityLabel="Mes anterior"
-        onPress={() => onChange(shiftMonthKey(value, -1))}
+        accessibilityLabel="Período anterior"
+        disabled={previous === undefined}
+        onPress={() => previous && onPeriodChange(previous.id)}
       />
 
       <Text
         numberOfLines={1}
-        style={{
-          color: colors.text,
-          fontSize: typography.fontSizes.md,
-          fontWeight: typography.fontWeights.semibold,
-        }}
+        style={[
+          styles.label,
+          {
+            color: colors.text,
+            fontSize: typography.fontSizes.md,
+            fontWeight: typography.fontWeights.semibold,
+          },
+        ]}
       >
-        {formatMonthYear(value)}
+        {selected?.label ?? ''}
       </Text>
 
       <ArrowButton
-        accessibilityLabel="Mes siguiente"
+        accessibilityLabel="Período siguiente"
         forward
-        disabled={nextDisabled}
-        onPress={() => onChange(nextMonth)}
+        disabled={next === undefined}
+        onPress={() => next && onPeriodChange(next.id)}
       />
     </View>
   )
@@ -121,6 +137,9 @@ const styles = StyleSheet.create({
   },
   outlined: {
     borderWidth: StyleSheet.hairlineWidth,
+  },
+  label: {
+    flexShrink: 1,
   },
   arrow: {
     alignItems: 'center',

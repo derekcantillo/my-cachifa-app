@@ -14,10 +14,12 @@ import { queryKeys } from './queryKeys'
 /**
  * The goals key is the root of the list, the detail and the savings
  * projection, so invalidating it refreshes the goals screen and the dashboard
- * carousel in one go.
+ * carousel in one go. What the goals hold counts towards net worth, so that
+ * refreshes too.
  */
 function invalidateGoalConsumers(queryClient: QueryClient): void {
   queryClient.invalidateQueries({ queryKey: queryKeys.goals() })
+  queryClient.invalidateQueries({ queryKey: queryKeys.netWorth() })
 }
 
 export function useCreateGoal() {

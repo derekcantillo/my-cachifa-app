@@ -5,17 +5,21 @@ import { setHasApiKey } from '@/api/apiKeyGate'
 import { setApiKeyCache } from '@/api/httpClient'
 import { clearApiKey } from '@/api/secureStorage'
 import {
+  AccountListItem,
   Button,
   Card,
   CategoryIcon,
+  EmptyState,
   ErrorNotice,
   ModalScreen,
   PlusCircleIcon,
   Separator,
   Skeleton,
   TextField,
+  WalletIcon,
 } from '@/components'
 import {
+  useAccounts,
   useCategories,
   useRecurringExpenses,
   useSettings,
@@ -56,6 +60,8 @@ export function SettingsScreen() {
 
   return (
     <ModalScreen title="Ajustes" onClose={navigation.goBack}>
+      <AccountsSection />
+
       <View style={{ gap: spacing.xs }}>
         <Text
           style={{
@@ -86,7 +92,10 @@ export function SettingsScreen() {
           </View>
         ) : expensesQuery.isError ? (
           <Text
-            style={{ color: colors.negative, fontSize: typography.fontSizes.sm }}
+            style={{
+              color: colors.negative,
+              fontSize: typography.fontSizes.sm,
+            }}
           >
             No pudimos cargar tus gastos fijos.
           </Text>
@@ -133,7 +142,14 @@ export function SettingsScreen() {
         label="Préstamos"
         variant="outline"
         onPress={openLoans}
-        icon={<CategoryIcon icon="loan" categoryId="LOAN" variant="plain" size={18} />}
+        icon={
+          <CategoryIcon
+            icon="loan"
+            categoryId="LOAN"
+            variant="plain"
+            size={18}
+          />
+        }
       />
 
       <Button
@@ -142,6 +158,113 @@ export function SettingsScreen() {
         onPress={handleChangeApiKey}
       />
     </ModalScreen>
+  )
+}
+
+/**
+ * Where the money sits, each with its current balance. Tapping one sets the
+ * balance it starts from — the only way to seed an account with money that
+ * predates the app.
+ */
+function AccountsSection() {
+  const { colors, spacing, typography } = useTheme()
+  const navigation = useNavigation()
+  const accountsQuery = useAccounts()
+  const accounts = accountsQuery.data ?? []
+
+  const openCreateAccount = useCallback(() => {
+    navigation.navigate('CreateAccount')
+  }, [navigation])
+
+  const openInitialBalance = useCallback(
+    (accountId: string) => {
+      navigation.navigate('SetInitialBalance', { accountId })
+    },
+    [navigation],
+  )
+
+  return (
+    <View style={{ gap: spacing.xs }}>
+      <Text
+        style={{
+          color: colors.text,
+          fontSize: typography.fontSizes.lg,
+          fontWeight: typography.fontWeights.bold,
+        }}
+      >
+        Cuentas
+      </Text>
+      <Text
+        style={{
+          color: colors.textSecondary,
+          fontSize: typography.fontSizes.sm,
+        }}
+      >
+        Tus cuentas y cuánto tiene cada una hoy. Toca una para ajustar su saldo
+        inicial.
+      </Text>
+
+      <Card>
+        {accountsQuery.isPending ? (
+          <View style={{ gap: spacing.md }}>
+            <Skeleton height={44} radius={14} />
+            <Skeleton height={44} radius={14} />
+          </View>
+        ) : accountsQuery.isError ? (
+          <Text
+            style={{
+              color: colors.negative,
+              fontSize: typography.fontSizes.sm,
+            }}
+          >
+            No pudimos cargar tus cuentas.
+          </Text>
+        ) : accounts.length === 0 ? (
+          <EmptyState
+            icon={<WalletIcon size={26} color={colors.textSecondary} />}
+            title="Aún no tienes cuentas"
+            description="Crea tu primera cuenta y define con cuánto dinero arranca."
+            actionLabel="Agregar cuenta"
+            onAction={openCreateAccount}
+          />
+        ) : (
+          <>
+            {accounts.map((account, index) => (
+              <View key={account.id}>
+                {index > 0 && <Separator />}
+                <AccountListItem
+                  account={account}
+                  onPress={item => openInitialBalance(item.id)}
+                />
+              </View>
+            ))}
+
+            <Separator />
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Agregar cuenta"
+              onPress={openCreateAccount}
+              style={({ pressed }) => [
+                styles.addRow,
+                { gap: spacing.sm, paddingVertical: spacing.md },
+                pressed && styles.pressed,
+              ]}
+            >
+              <PlusCircleIcon size={22} color={colors.primary} />
+              <Text
+                style={{
+                  color: colors.primary,
+                  fontSize: typography.fontSizes.md,
+                  fontWeight: typography.fontWeights.semibold,
+                }}
+              >
+                Agregar cuenta
+              </Text>
+            </Pressable>
+          </>
+        )}
+      </Card>
+    </View>
   )
 }
 
@@ -163,7 +286,11 @@ function SavingsTargetCard() {
   }, [settingsQuery.data])
 
   const parsed = Number(value)
-  const isValid = value.trim() !== '' && Number.isFinite(parsed) && parsed >= 0 && parsed <= 100
+  const isValid =
+    value.trim() !== '' &&
+    Number.isFinite(parsed) &&
+    parsed >= 0 &&
+    parsed <= 100
   const hasChanged =
     settingsQuery.data !== undefined &&
     isValid &&
@@ -191,8 +318,8 @@ function SavingsTargetCard() {
           fontSize: typography.fontSizes.sm,
         }}
       >
-        Qué parte de tu ingreso disponible (ya descontados los gastos fijos)
-        el plan recomienda destinar a tus metas cada mes.
+        Qué parte de tu ingreso disponible (ya descontados los gastos fijos) el
+        plan recomienda destinar a tus metas cada mes.
       </Text>
 
       <Card>
@@ -200,7 +327,10 @@ function SavingsTargetCard() {
           <Skeleton height={44} radius={14} />
         ) : settingsQuery.isError ? (
           <Text
-            style={{ color: colors.negative, fontSize: typography.fontSizes.sm }}
+            style={{
+              color: colors.negative,
+              fontSize: typography.fontSizes.sm,
+            }}
           >
             No pudimos cargar tu meta de ahorro.
           </Text>

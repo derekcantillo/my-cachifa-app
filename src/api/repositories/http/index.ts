@@ -8,3 +8,5 @@ export { httpRecurringExpenseRepository } from './HttpRecurringExpenseRepository
 export { httpSettingsRepository } from './HttpSettingsRepository'
 export { httpAlertRepository } from './HttpAlertRepository'
 export { httpLoanRepository } from './HttpLoanRepository'
+export { httpFinancialPeriodRepository } from './HttpFinancialPeriodRepository'
+export { httpNetWorthRepository } from './HttpNetWorthRepository'

@@ -1,7 +1,7 @@
 import React from 'react'
 import { act, create } from 'react-test-renderer'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { getCurrentMonthKey } from '@/utils'
+import { CURRENT_PERIOD_ID } from '@/api/repositories/mock/seed-data'
 import { useCreateTransaction } from '../useCreateTransaction'
 import { useBudgets } from '../useBudgets'
 import {
@@ -95,7 +95,7 @@ describe('recurring expense mutations (API_MODE=mock)', () => {
     const result = renderWithClient(
       () => ({
         list: useRecurringExpenses(),
-        budgets: useBudgets({ month: getCurrentMonthKey() }),
+        budgets: useBudgets({ periodId: CURRENT_PERIOD_ID }),
         create: useCreateRecurringExpense(),
         update: useUpdateRecurringExpense(),
         remove: useDeleteRecurringExpense(),
@@ -126,7 +126,7 @@ describe('recurring expense mutations (API_MODE=mock)', () => {
     expect(afterCreate).toHaveLength(seededCount + 1)
     const created = afterCreate.find(item => item.name === 'Internet')
     expect(created).toBeDefined()
-    // Creating a recurring expense recalculates the current month's budgets.
+    // Creating a recurring expense recalculates the current period's budgets.
     expect(result.get().budgets.dataUpdatedAt).toBeGreaterThan(budgetsFetchedAt)
 
     const beforeUpdateFetchedAt = result.get().budgets.dataUpdatedAt
@@ -169,12 +169,11 @@ describe('recurring expense mutations (API_MODE=mock)', () => {
     )
   })
 
-  it('drops a pending expense from the list once its movement for the month exists', async () => {
+  it('drops a pending expense from the list once its movement for the period exists', async () => {
     const client = createTestClient()
-    const month = getCurrentMonthKey()
     const result = renderWithClient(
       () => ({
-        pending: usePendingRecurringExpenses(month),
+        pending: usePendingRecurringExpenses(CURRENT_PERIOD_ID),
         createTransaction: useCreateTransaction(),
       }),
       client,
@@ -182,7 +181,7 @@ describe('recurring expense mutations (API_MODE=mock)', () => {
 
     await settle()
 
-    // Seeded as active, with no movement linked to it this month.
+    // Seeded as active, with no movement linked to it this period.
     const beforePending = result.get().pending.data ?? []
     expect(beforePending.some(item => item.id === 'rec-arriendo')).toBe(true)
     // Seeded as inactive — never pending, movement or not.
